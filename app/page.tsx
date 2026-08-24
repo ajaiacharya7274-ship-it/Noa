@@ -2,13 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 
-type NoaState =
-  | "IDLE"
-  | "LISTENING"
-  | "THINKING"
-  | "SPEAKING";
+type NoaState = "IDLE" | "LISTENING" | "THINKING" | "SPEAKING";
 
-type Recognition = {
+type SpeechRecognitionInstance = {
   lang: string;
   continuous: boolean;
   interimResults: boolean;
@@ -21,12 +17,12 @@ type Recognition = {
   onend: (() => void) | null;
 };
 
-type RecognitionConstructor = new () => Recognition;
+type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 
 declare global {
   interface Window {
-    SpeechRecognition?: RecognitionConstructor;
-    webkitSpeechRecognition?: RecognitionConstructor;
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
   }
 }
 
@@ -36,28 +32,58 @@ export default function Home() {
   const [text, setText] = useState("");
   const [zoom, setZoom] = useState(1);
 
+  // IMPORTANT:
+  // Do NOT use window.innerWidth here.
+  // GitHub Pages builds the page on the server first.
   const [mic, setMic] = useState({
-    x: window.innerWidth - 105,
-    y: window.innerHeight - 105,
+    x: 20,
+    y: 20,
   });
 
-  const recognitionRef = useRef<Recognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const micOnRef = useRef(false);
 
-  const dragging = useRef(false);
-  const moved = useRef(false);
-  const pointerId = useRef<number | null>(null);
+  const draggingRef = useRef(false);
+  const movedRef = useRef(false);
 
-  const dragOffset = useRef({
+  const dragOffsetRef = useRef({
     x: 0,
     y: 0,
   });
 
-  /* -----------------------------
-     SPEECH RECOGNITION
-  ----------------------------- */
+  // --------------------------------------------------
+  // SET INITIAL MIC POSITION AFTER BROWSER LOAD
+  // --------------------------------------------------
 
   useEffect(() => {
+    const updateMicPosition = () => {
+      setMic({
+        x: Math.max(10, window.innerWidth - 105),
+        y: Math.max(10, window.innerHeight - 105),
+      });
+    };
+
+    updateMicPosition();
+
+    window.addEventListener("resize", updateMicPosition);
+
+    return () => {
+      window.removeEventListener(
+        "resize",
+        updateMicPosition
+      );
+    };
+  }, []);
+
+  // --------------------------------------------------
+  // SPEECH RECOGNITION
+  // --------------------------------------------------
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
     const Recognition =
       window.SpeechRecognition ||
       window.webkitSpeechRecognition;
@@ -79,42 +105,45 @@ export default function Home() {
     };
 
     recognition.onresult = (event: any) => {
-      let result = "";
+      let transcript = "";
 
       for (
         let i = event.resultIndex;
         i < event.results.length;
         i++
       ) {
-        result += event.results[i][0].transcript;
+        transcript +=
+          event.results[i][0].transcript;
       }
 
-      result = result.trim();
+      transcript = transcript.trim();
 
-      if (!result) return;
+      if (!transcript) {
+        return;
+      }
 
-      setText(result);
+      setText(transcript);
 
-      const last =
+      const lastResult =
         event.results[event.results.length - 1];
 
-      if (last.isFinal) {
+      if (lastResult && lastResult.isFinal) {
         setState("THINKING");
 
         setTimeout(() => {
-          handleCommand(result);
-        }, 400);
+          handleCommand(transcript);
+        }, 350);
       }
     };
 
     recognition.onerror = () => {
+      setMicOn(false);
+      micOnRef.current = false;
       setState("IDLE");
     };
 
     recognition.onend = () => {
-      if (micOnRef.current) {
-        setState("LISTENING");
-      } else {
+      if (!micOnRef.current) {
         setState("IDLE");
       }
     };
@@ -128,30 +157,32 @@ export default function Home() {
     };
   }, []);
 
-  /* -----------------------------
-     SPEAK
-  ----------------------------- */
+  // --------------------------------------------------
+  // SPEAK
+  // --------------------------------------------------
 
   function speak(message: string) {
-    if (!("speechSynthesis" in window)) {
+    if (
+      typeof window === "undefined" ||
+      !("speechSynthesis" in window)
+    ) {
       setState("IDLE");
       return;
     }
 
     window.speechSynthesis.cancel();
 
-    const voice = new SpeechSynthesisUtterance(
-      message
-    );
+    const utterance =
+      new SpeechSynthesisUtterance(message);
 
-    voice.rate = 1;
-    voice.pitch = 1;
+    utterance.rate = 1;
+    utterance.pitch = 1;
 
-    voice.onstart = () => {
+    utterance.onstart = () => {
       setState("SPEAKING");
     };
 
-    voice.onend = () => {
+    utterance.onend = () => {
       setState(
         micOnRef.current
           ? "LISTENING"
@@ -159,28 +190,43 @@ export default function Home() {
       );
     };
 
-    window.speechSynthesis.speak(voice);
+    window.speechSynthesis.speak(
+      utterance
+    );
   }
 
-  /* -----------------------------
-     COMMANDS
-  ----------------------------- */
+  // --------------------------------------------------
+  // NOA COMMANDS
+  // --------------------------------------------------
 
   function handleCommand(command: string) {
-    const value = command.toLowerCase().trim();
+    const value =
+      command.toLowerCase().trim();
 
-    if (value.includes("zoom in")) {
-      setZoom((z) =>
-        Math.min(2.2, z + 0.15)
+    if (
+      value === "hello" ||
+      value.includes("hello noa")
+    ) {
+      speak("Hello. I am NOA.");
+      return;
+    }
+
+    if (
+      value.includes("zoom in")
+    ) {
+      setZoom((current) =>
+        Math.min(2.2, current + 0.15)
       );
 
       speak("Zooming in.");
       return;
     }
 
-    if (value.includes("zoom out")) {
-      setZoom((z) =>
-        Math.max(0.6, z - 0.15)
+    if (
+      value.includes("zoom out")
+    ) {
+      setZoom((current) =>
+        Math.max(0.6, current - 0.15)
       );
 
       speak("Zooming out.");
@@ -193,14 +239,6 @@ export default function Home() {
     ) {
       setZoom(1);
       speak("Zoom reset.");
-      return;
-    }
-
-    if (
-      value === "hello noa" ||
-      value === "hello"
-    ) {
-      speak("Hello. I am NOA.");
       return;
     }
 
@@ -219,13 +257,13 @@ export default function Home() {
     );
   }
 
-  /* -----------------------------
-     MIC
-  ----------------------------- */
+  // --------------------------------------------------
+  // MICROPHONE ON / OFF
+  // --------------------------------------------------
 
   function toggleMic() {
-    if (moved.current) {
-      moved.current = false;
+    if (movedRef.current) {
+      movedRef.current = false;
       return;
     }
 
@@ -257,9 +295,9 @@ export default function Home() {
     }
   }
 
-  /* -----------------------------
-     RESET MIC
-  ----------------------------- */
+  // --------------------------------------------------
+  // RESET
+  // --------------------------------------------------
 
   function resetMic() {
     setMicOn(false);
@@ -267,7 +305,10 @@ export default function Home() {
     setState("IDLE");
     setText("");
 
-    if ("speechSynthesis" in window) {
+    if (
+      typeof window !== "undefined" &&
+      "speechSynthesis" in window
+    ) {
       window.speechSynthesis.cancel();
     }
 
@@ -282,66 +323,63 @@ export default function Home() {
     }
   }
 
-  /* -----------------------------
-     DRAG START
-  ----------------------------- */
+  // --------------------------------------------------
+  // MIC DRAG START
+  // --------------------------------------------------
 
-  function pointerDown(
-    event: React.PointerEvent<HTMLButtonElement>
+  function handlePointerDown(
+    event: any
   ) {
     const element =
       event.currentTarget;
 
-    pointerId.current =
-      event.pointerId;
-
     const rect =
       element.getBoundingClientRect();
 
-    dragOffset.current = {
+    dragOffsetRef.current = {
       x: event.clientX - rect.left,
       y: event.clientY - rect.top,
     };
 
-    dragging.current = true;
-    moved.current = false;
+    draggingRef.current = true;
+    movedRef.current = false;
 
-    element.setPointerCapture(
-      event.pointerId
-    );
+    try {
+      element.setPointerCapture(
+        event.pointerId
+      );
+    } catch {}
 
     event.preventDefault();
   }
 
-  /* -----------------------------
-     DRAG MOVE
-  ----------------------------- */
+  // --------------------------------------------------
+  // MIC DRAG MOVE
+  // --------------------------------------------------
 
-  function pointerMove(
-    event: React.PointerEvent<HTMLButtonElement>
+  function handlePointerMove(
+    event: any
   ) {
-    if (!dragging.current) return;
-
-    if (
-      pointerId.current !==
-      event.pointerId
-    ) {
+    if (!draggingRef.current) {
       return;
     }
 
+    const element =
+      event.currentTarget;
+
     const width =
-      event.currentTarget.offsetWidth;
+      element.offsetWidth;
 
     const height =
-      event.currentTarget.offsetHeight;
+      element.offsetHeight;
 
     let x =
       event.clientX -
-      dragOffset.current.x;
+      dragOffsetRef.current.x;
 
     let y =
       event.clientY -
-      dragOffset.current.y;
+      dragOffsetRef.current.y;
 
     x = Math.max(
       0,
@@ -363,7 +401,7 @@ export default function Home() {
       Math.abs(event.movementX) > 1 ||
       Math.abs(event.movementY) > 1
     ) {
-      moved.current = true;
+      movedRef.current = true;
     }
 
     setMic({
@@ -372,41 +410,43 @@ export default function Home() {
     });
   }
 
-  /* -----------------------------
-     DRAG END
-  ----------------------------- */
+  // --------------------------------------------------
+  // MIC DRAG END
+  // --------------------------------------------------
 
-  function pointerUp(
-    event: React.PointerEvent<HTMLButtonElement>
+  function handlePointerUp(
+    event: any
   ) {
-    dragging.current = false;
+    draggingRef.current = false;
 
     try {
       event.currentTarget.releasePointerCapture(
         event.pointerId
       );
     } catch {}
-
-    pointerId.current = null;
   }
 
-  /* -----------------------------
-     COLORS
-  ----------------------------- */
+  // --------------------------------------------------
+  // STATE COLOR
+  // --------------------------------------------------
 
-  let color = "#4fa3ff";
+  let stateColor = "#3b82f6";
 
   if (micOn) {
-    color = "#35e887";
+    stateColor = "#22c55e";
   }
 
   if (state === "THINKING") {
-    color = "#a855f7";
+    stateColor = "#a855f7";
   }
 
   if (state === "SPEAKING") {
-    color = "#38bdf8";
+    stateColor = "#38bdf8";
   }
+
+  // --------------------------------------------------
+  // UI
+  // --------------------------------------------------
 
   return (
     <>
@@ -416,11 +456,9 @@ export default function Home() {
           inset: 0,
           overflow: "hidden",
           background: "#000",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: color,
+          color: stateColor,
           touchAction: "none",
+          userSelect: "none",
         }}
       >
         {/* TOP STATUS */}
@@ -428,21 +466,23 @@ export default function Home() {
         <div
           style={{
             position: "fixed",
-            top: 25,
+            top: 24,
             left: 0,
             right: 0,
+            zIndex: 30,
             display: "flex",
-            justifyContent: "center",
             alignItems: "center",
-            gap: 18,
-            zIndex: 20,
+            justifyContent: "center",
+            gap: 16,
           }}
         >
           <span
             style={{
               fontSize: 12,
               letterSpacing: 3,
-              color: color,
+              color: stateColor,
+              textShadow:
+                `0 0 12px ${stateColor}`,
             }}
           >
             {micOn
@@ -451,15 +491,17 @@ export default function Home() {
           </span>
 
           <button
+            type="button"
             onClick={resetMic}
             style={{
+              border:
+                "1px solid rgba(80,160,255,.45)",
               background:
                 "rgba(5,10,20,.9)",
-              color: "#7fb9ff",
-              border:
-                "1px solid rgba(79,163,255,.5)",
+              color: "#8ab8ff",
               borderRadius: 12,
-              padding: "9px 14px",
+              padding:
+                "9px 14px",
               fontSize: 11,
               letterSpacing: 1,
             }}
@@ -468,49 +510,53 @@ export default function Home() {
           </button>
         </div>
 
-        {/* ORB */}
+        {/* MAIN ORB */}
 
         <div
           style={{
+            position: "absolute",
+            left: "50%",
+            top: "50%",
             width: 310,
             height: 310,
-            position: "relative",
             transform:
-              `scale(${zoom})`,
+              `translate(-50%, -50%) scale(${zoom})`,
             transition:
               "transform .2s ease",
           }}
         >
-          {/* OUTER GLOW */}
+          {/* GLOW */}
 
           <div
             style={{
               position: "absolute",
-              inset: -70,
+              inset: -75,
               borderRadius: "50%",
               background:
-                `radial-gradient(circle, ${color}55, transparent 68%)`,
-              filter: "blur(22px)",
+                `radial-gradient(circle, ${stateColor}55 0%, transparent 68%)`,
+              filter: "blur(24px)",
               animation:
-                "noaGlow 2.5s ease-in-out infinite",
+                "noaGlow 2.4s ease-in-out infinite",
             }}
           />
 
-          {/* RINGS */}
+          {/* OUTER RING */}
 
           <div
             style={{
               position: "absolute",
-              inset: 5,
+              inset: 4,
               borderRadius: "50%",
               border:
-                `2px solid ${color}`,
+                `2px solid ${stateColor}`,
               boxShadow:
-                `0 0 20px ${color}88`,
+                `0 0 24px ${stateColor}99`,
               animation:
                 "noaRotate 20s linear infinite",
             }}
           />
+
+          {/* SECOND RING */}
 
           <div
             style={{
@@ -518,23 +564,25 @@ export default function Home() {
               inset: 25,
               borderRadius: "50%",
               border:
-                `1px solid ${color}88`,
+                `1px solid ${stateColor}99`,
               boxShadow:
-                `0 0 15px ${color}55`,
+                `0 0 18px ${stateColor}55`,
               animation:
-                "noaRotateReverse 15s linear infinite",
+                "noaRotateReverse 14s linear infinite",
             }}
           />
+
+          {/* THIRD RING */}
 
           <div
             style={{
               position: "absolute",
-              inset: 50,
+              inset: 52,
               borderRadius: "50%",
               border:
-                `1px solid ${color}55`,
+                `1px solid ${stateColor}66`,
               animation:
-                "noaRotate 11s linear infinite",
+                "noaRotate 10s linear infinite",
             }}
           />
 
@@ -544,28 +592,43 @@ export default function Home() {
             style={{
               position: "absolute",
               inset: 0,
+              zIndex: 5,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              zIndex: 5,
             }}
           >
             {/* WAVEFORM */}
 
             <div
               style={{
-                height: 55,
+                height: 60,
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: 5,
               }}
             >
               {[
-                10, 17, 25, 35, 22,
-                40, 28, 45, 25, 36,
-                20, 42, 28, 35, 22,
-                30, 18, 12,
+                12,
+                20,
+                30,
+                42,
+                25,
+                46,
+                32,
+                50,
+                28,
+                42,
+                22,
+                48,
+                30,
+                40,
+                25,
+                34,
+                20,
+                12,
               ].map(
                 (height, index) => (
                   <span
@@ -574,78 +637,116 @@ export default function Home() {
                       width: 4,
                       height,
                       borderRadius: 10,
-                      background: color,
+                      background:
+                        stateColor,
                       boxShadow:
-                        `0 0 10px ${color}`,
+                        `0 0 10px ${stateColor}`,
                       animation:
                         "noaWave .6s ease-in-out infinite alternate",
                       animationDelay:
-                        `${index * .04}s`,
+                        `${index * 0.04}s`,
                     }}
                   />
                 )
               )}
             </div>
 
+            {/* STATE */}
+
             <div
               style={{
                 marginTop: 14,
-                fontSize: 13,
-                letterSpacing: 5,
-                color: color,
+                fontSize: 14,
+                letterSpacing: 6,
+                color: stateColor,
                 textShadow:
-                  `0 0 15px ${color}`,
+                  `0 0 18px ${stateColor}`,
               }}
             >
               {state}
             </div>
           </div>
+
+          {/* ORBIT DOTS */}
+
+          {[
+            "0%",
+            "25%",
+            "50%",
+            "75%",
+          ].map(
+            (position, index) => (
+              <span
+                key={index}
+                style={{
+                  position: "absolute",
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background:
+                    stateColor,
+                  boxShadow:
+                    `0 0 12px ${stateColor}`,
+                  left:
+                    index % 2 === 0
+                      ? position
+                      : "auto",
+                  right:
+                    index % 2 === 1
+                      ? position
+                      : "auto",
+                  top:
+                    index < 2
+                      ? "0%"
+                      : "auto",
+                  bottom:
+                    index >= 2
+                      ? "0%"
+                      : "auto",
+                  transform:
+                    "translate(-50%, -50%)",
+                }}
+              />
+            )
+          )}
         </div>
 
-        {/* MIC */}
+        {/* DRAGGABLE MIC */}
 
         <button
-          onClick={toggleMic}
-          onPointerDown={pointerDown}
-          onPointerMove={pointerMove}
-          onPointerUp={pointerUp}
-          onPointerCancel={pointerUp}
+          type="button"
           aria-label="NOA microphone"
+          onClick={toggleMic}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
           style={{
             position: "fixed",
             left: mic.x,
             top: mic.y,
-            width: 78,
-            height: 78,
+            width: 80,
+            height: 80,
+            padding: 0,
             borderRadius: "50%",
             border:
-              `2px solid ${micOn ? "#35e887" : "#4fa3ff"}`,
+              `2px solid ${stateColor}`,
             background:
-              micOn
-                ? "rgba(53,232,135,.12)"
-                : "rgba(79,163,255,.10)",
-            color:
-              micOn
-                ? "#35e887"
-                : "#4fa3ff",
+              `rgba(5,10,25,.92)`,
+            color: stateColor,
             boxShadow:
-              `0 0 28px ${
-                micOn
-                  ? "rgba(53,232,135,.55)"
-                  : "rgba(79,163,255,.35)"
-              }`,
+              `0 0 30px ${stateColor}77`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 50,
+            zIndex: 100,
             cursor: "grab",
             touchAction: "none",
-            userSelect: "none",
           }}
         >
           <svg
-            width="34"
-            height="34"
+            width="35"
+            height="35"
             viewBox="0 0 32 32"
             fill="none"
           >
@@ -688,15 +789,15 @@ export default function Home() {
           <div
             style={{
               position: "fixed",
-              bottom: 25,
               left: "50%",
+              bottom: 25,
               transform:
                 "translateX(-50%)",
               maxWidth: "80%",
-              color: "#7890aa",
-              fontSize: 11,
               textAlign: "center",
-              zIndex: 10,
+              color: "#718096",
+              fontSize: 11,
+              zIndex: 20,
             }}
           >
             {text}
@@ -708,7 +809,7 @@ export default function Home() {
 
       <style>{`
         @keyframes noaGlow {
-          0%,100% {
+          0%, 100% {
             transform: scale(1);
             opacity: .55;
           }
