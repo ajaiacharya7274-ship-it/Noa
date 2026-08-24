@@ -2,105 +2,66 @@
 
 import { useEffect, useRef, useState } from "react";
 
-type NoaState = "IDLE" | "LISTENING" | "THINKING" | "SPEAKING";
-
-type SpeechRecognitionInstance = {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  start: () => void;
-  stop: () => void;
-  abort: () => void;
-  onstart: (() => void) | null;
-  onresult: ((event: any) => void) | null;
-  onerror: (() => void) | null;
-  onend: (() => void) | null;
-};
-
-type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
-
-declare global {
-  interface Window {
-    SpeechRecognition?: SpeechRecognitionConstructor;
-    webkitSpeechRecognition?: SpeechRecognitionConstructor;
-  }
-}
+type State = "IDLE" | "LISTENING" | "THINKING" | "SPEAKING";
 
 export default function Home() {
-  const [state, setState] = useState<NoaState>("IDLE");
+  const [state, setState] = useState<State>("IDLE");
   const [micOn, setMicOn] = useState(false);
-  const [text, setText] = useState("");
+
+  const [micPosition, setMicPosition] = useState({
+    right: 28,
+    bottom: 105,
+  });
+
   const [zoom, setZoom] = useState(1);
 
-  // IMPORTANT:
-  // Do NOT use window.innerWidth here.
-  // GitHub Pages builds the page on the server first.
-  const [mic, setMic] = useState({
-    x: 20,
-    y: 20,
-  });
-
-  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
-  const micOnRef = useRef(false);
+  const recognitionRef = useRef<any>(null);
+  const listeningRef = useRef(false);
 
   const draggingRef = useRef(false);
-  const movedRef = useRef(false);
+  const draggedRef = useRef(false);
 
-  const dragOffsetRef = useRef({
-    x: 0,
-    y: 0,
-  });
+  const pointerIdRef = useRef<number | null>(null);
+  const grabXRef = useRef(0);
+  const grabYRef = useRef(0);
 
-  // --------------------------------------------------
-  // SET INITIAL MIC POSITION AFTER BROWSER LOAD
-  // --------------------------------------------------
+  const micRef = useRef<HTMLButtonElement | null>(null);
 
-  useEffect(() => {
-    const updateMicPosition = () => {
-      setMic({
-        x: Math.max(10, window.innerWidth - 105),
-        y: Math.max(10, window.innerHeight - 105),
-      });
-    };
+  /* --------------------------------------------------
+     STATE COLORS
+  -------------------------------------------------- */
 
-    updateMicPosition();
+  const color =
+    state === "LISTENING"
+      ? "#35e887"
+      : state === "THINKING"
+      ? "#a855f7"
+      : state === "SPEAKING"
+      ? "#38bdf8"
+      : "#4fa3ff";
 
-    window.addEventListener("resize", updateMicPosition);
-
-    return () => {
-      window.removeEventListener(
-        "resize",
-        updateMicPosition
-      );
-    };
-  }, []);
-
-  // --------------------------------------------------
-  // SPEECH RECOGNITION
-  // --------------------------------------------------
+  /* --------------------------------------------------
+     BROWSER-ONLY SETUP
+  -------------------------------------------------- */
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+    if (typeof window === "undefined") return;
 
-    const Recognition =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
 
-    if (!Recognition) {
-      return;
-    }
+    if (!SpeechRecognition) return;
 
-    const recognition = new Recognition();
+    const recognition = new SpeechRecognition();
 
     recognition.lang = "en-US";
     recognition.continuous = false;
     recognition.interimResults = true;
 
     recognition.onstart = () => {
+      listeningRef.current = true;
       setMicOn(true);
-      micOnRef.current = true;
       setState("LISTENING");
     };
 
@@ -116,34 +77,28 @@ export default function Home() {
           event.results[i][0].transcript;
       }
 
-      transcript = transcript.trim();
-
-      if (!transcript) {
-        return;
-      }
-
-      setText(transcript);
-
-      const lastResult =
-        event.results[event.results.length - 1];
-
-      if (lastResult && lastResult.isFinal) {
+      if (transcript.trim()) {
         setState("THINKING");
 
-        setTimeout(() => {
-          handleCommand(transcript);
-        }, 350);
+        if (
+          event.results[event.results.length - 1]
+            ?.isFinal
+        ) {
+          handleCommand(transcript.trim());
+        }
       }
     };
 
     recognition.onerror = () => {
+      listeningRef.current = false;
       setMicOn(false);
-      micOnRef.current = false;
       setState("IDLE");
     };
 
     recognition.onend = () => {
-      if (!micOnRef.current) {
+      listeningRef.current = false;
+
+      if (!micOn) {
         setState("IDLE");
       }
     };
@@ -155,13 +110,13 @@ export default function Home() {
         recognition.abort();
       } catch {}
     };
-  }, []);
+  }, [micOn]);
 
-  // --------------------------------------------------
-  // SPEAK
-  // --------------------------------------------------
+  /* --------------------------------------------------
+     SPEAK
+  -------------------------------------------------- */
 
-  function speak(message: string) {
+  function speak(text: string) {
     if (
       typeof window === "undefined" ||
       !("speechSynthesis" in window)
@@ -173,9 +128,9 @@ export default function Home() {
     window.speechSynthesis.cancel();
 
     const utterance =
-      new SpeechSynthesisUtterance(message);
+      new SpeechSynthesisUtterance(text);
 
-    utterance.rate = 1;
+    utterance.rate = 1.02;
     utterance.pitch = 1;
 
     utterance.onstart = () => {
@@ -183,39 +138,35 @@ export default function Home() {
     };
 
     utterance.onend = () => {
-      setState(
-        micOnRef.current
-          ? "LISTENING"
-          : "IDLE"
-      );
+      setState("IDLE");
     };
 
-    window.speechSynthesis.speak(
-      utterance
-    );
+    window.speechSynthesis.speak(utterance);
   }
 
-  // --------------------------------------------------
-  // NOA COMMANDS
-  // --------------------------------------------------
+  /* --------------------------------------------------
+     COMMANDS
+  -------------------------------------------------- */
 
   function handleCommand(command: string) {
-    const value =
-      command.toLowerCase().trim();
+    const text = command
+      .toLowerCase()
+      .trim();
 
     if (
-      value === "hello" ||
-      value.includes("hello noa")
+      text === "hello" ||
+      text.includes("hello noa")
     ) {
       speak("Hello. I am NOA.");
       return;
     }
 
     if (
-      value.includes("zoom in")
+      text.includes("zoom in") ||
+      text.includes("make it bigger")
     ) {
-      setZoom((current) =>
-        Math.min(2.2, current + 0.15)
+      setZoom((value) =>
+        Math.min(2.4, value + 0.15)
       );
 
       speak("Zooming in.");
@@ -223,10 +174,11 @@ export default function Home() {
     }
 
     if (
-      value.includes("zoom out")
+      text.includes("zoom out") ||
+      text.includes("make it smaller")
     ) {
-      setZoom((current) =>
-        Math.max(0.6, current - 0.15)
+      setZoom((value) =>
+        Math.max(0.55, value - 0.15)
       );
 
       speak("Zooming out.");
@@ -234,8 +186,8 @@ export default function Home() {
     }
 
     if (
-      value.includes("reset zoom") ||
-      value.includes("normal size")
+      text.includes("reset zoom") ||
+      text.includes("normal size")
     ) {
       setZoom(1);
       speak("Zoom reset.");
@@ -243,8 +195,8 @@ export default function Home() {
     }
 
     if (
-      value === "status" ||
-      value.includes("your status")
+      text === "status" ||
+      text.includes("what is your state")
     ) {
       speak(
         `NOA is currently ${state.toLowerCase()}.`
@@ -252,18 +204,16 @@ export default function Home() {
       return;
     }
 
-    speak(
-      `I heard you say ${command}.`
-    );
+    speak(`I heard you say ${command}.`);
   }
 
-  // --------------------------------------------------
-  // MICROPHONE ON / OFF
-  // --------------------------------------------------
+  /* --------------------------------------------------
+     MIC TOGGLE
+  -------------------------------------------------- */
 
   function toggleMic() {
-    if (movedRef.current) {
-      movedRef.current = false;
+    if (draggedRef.current) {
+      draggedRef.current = false;
       return;
     }
 
@@ -272,20 +222,22 @@ export default function Home() {
 
     if (!micOn) {
       setMicOn(true);
-      micOnRef.current = true;
-      setState("LISTENING");
 
       if (recognition) {
         try {
           recognition.start();
-        } catch {}
+        } catch {
+          setState("LISTENING");
+        }
+      } else {
+        setState("LISTENING");
       }
 
       return;
     }
 
     setMicOn(false);
-    micOnRef.current = false;
+    listeningRef.current = false;
     setState("IDLE");
 
     if (recognition) {
@@ -295,15 +247,14 @@ export default function Home() {
     }
   }
 
-  // --------------------------------------------------
-  // RESET
-  // --------------------------------------------------
+  /* --------------------------------------------------
+     RESET MIC
+  -------------------------------------------------- */
 
   function resetMic() {
     setMicOn(false);
-    micOnRef.current = false;
+    listeningRef.current = false;
     setState("IDLE");
-    setText("");
 
     if (
       typeof window !== "undefined" &&
@@ -323,29 +274,41 @@ export default function Home() {
     }
   }
 
-  // --------------------------------------------------
-  // MIC DRAG START
-  // --------------------------------------------------
+  /* --------------------------------------------------
+     MIC DRAG START
+  -------------------------------------------------- */
 
   function handlePointerDown(
-    event: any
+    event: React.PointerEvent<HTMLButtonElement>
   ) {
-    const element =
-      event.currentTarget;
+    const mic = micRef.current;
+
+    if (!mic) return;
+
+    if (
+      event.button !== undefined &&
+      event.button !== 0
+    ) {
+      return;
+    }
 
     const rect =
-      element.getBoundingClientRect();
+      mic.getBoundingClientRect();
 
-    dragOffsetRef.current = {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
-    };
+    pointerIdRef.current =
+      event.pointerId;
+
+    grabXRef.current =
+      event.clientX - rect.left;
+
+    grabYRef.current =
+      event.clientY - rect.top;
 
     draggingRef.current = true;
-    movedRef.current = false;
+    draggedRef.current = false;
 
     try {
-      element.setPointerCapture(
+      mic.setPointerCapture(
         event.pointerId
       );
     } catch {}
@@ -353,470 +316,579 @@ export default function Home() {
     event.preventDefault();
   }
 
-  // --------------------------------------------------
-  // MIC DRAG MOVE
-  // --------------------------------------------------
+  /* --------------------------------------------------
+     MIC DRAG MOVE
+  -------------------------------------------------- */
 
   function handlePointerMove(
-    event: any
+    event: React.PointerEvent<HTMLButtonElement>
   ) {
-    if (!draggingRef.current) {
+    if (
+      !draggingRef.current ||
+      pointerIdRef.current !==
+        event.pointerId
+    ) {
       return;
     }
 
-    const element =
-      event.currentTarget;
+    const mic = micRef.current;
 
-    const width =
-      element.offsetWidth;
+    if (!mic) return;
 
-    const height =
-      element.offsetHeight;
+    const rect =
+      mic.getBoundingClientRect();
 
-    let x =
+    const x =
       event.clientX -
-      dragOffsetRef.current.x;
+      grabXRef.current;
 
-    let y =
+    const y =
       event.clientY -
-      dragOffsetRef.current.y;
-
-    x = Math.max(
-      0,
-      Math.min(
-        window.innerWidth - width,
-        x
-      )
-    );
-
-    y = Math.max(
-      0,
-      Math.min(
-        window.innerHeight - height,
-        y
-      )
-    );
+      grabYRef.current;
 
     if (
-      Math.abs(event.movementX) > 1 ||
-      Math.abs(event.movementY) > 1
+      Math.abs(
+        event.clientX -
+          (rect.left + grabXRef.current)
+      ) > 3 ||
+      Math.abs(
+        event.clientY -
+          (rect.top + grabYRef.current)
+      ) > 3
     ) {
-      movedRef.current = true;
+      draggedRef.current = true;
     }
 
-    setMic({
-      x,
-      y,
+    const maxX =
+      window.innerWidth - rect.width;
+
+    const maxY =
+      window.innerHeight - rect.height;
+
+    const newX = Math.max(
+      0,
+      Math.min(maxX, x)
+    );
+
+    const newY = Math.max(
+      0,
+      Math.min(maxY, y)
+    );
+
+    setMicPosition({
+      right:
+        window.innerWidth -
+        newX -
+        rect.width,
+
+      bottom:
+        window.innerHeight -
+        newY -
+        rect.height,
     });
   }
 
-  // --------------------------------------------------
-  // MIC DRAG END
-  // --------------------------------------------------
+  /* --------------------------------------------------
+     MIC DRAG END
+  -------------------------------------------------- */
 
   function handlePointerUp(
-    event: any
+    event: React.PointerEvent<HTMLButtonElement>
   ) {
+    if (
+      pointerIdRef.current !==
+      event.pointerId
+    ) {
+      return;
+    }
+
     draggingRef.current = false;
+    pointerIdRef.current = null;
 
-    try {
-      event.currentTarget.releasePointerCapture(
-        event.pointerId
-      );
-    } catch {}
+    const mic = micRef.current;
+
+    if (mic) {
+      try {
+        mic.releasePointerCapture(
+          event.pointerId
+        );
+      } catch {}
+    }
+
+    if (draggedRef.current) {
+      setTimeout(() => {
+        draggedRef.current = false;
+      }, 100);
+    }
   }
 
-  // --------------------------------------------------
-  // STATE COLOR
-  // --------------------------------------------------
+  /* --------------------------------------------------
+     WAVEFORM
+  -------------------------------------------------- */
 
-  let stateColor = "#3b82f6";
+  const bars = [
+    5, 8, 12, 18, 11,
+    23, 16, 29, 19,
+    24, 14, 9, 6,
+    10, 16, 22, 15,
+    20, 27, 17, 10,
+    14, 20, 25, 15,
+    9, 5,
+  ];
 
-  if (micOn) {
-    stateColor = "#22c55e";
-  }
-
-  if (state === "THINKING") {
-    stateColor = "#a855f7";
-  }
-
-  if (state === "SPEAKING") {
-    stateColor = "#38bdf8";
-  }
-
-  // --------------------------------------------------
-  // UI
-  // --------------------------------------------------
+  /* --------------------------------------------------
+     RENDER
+  -------------------------------------------------- */
 
   return (
-    <>
-      <main
+    <main
+      style={{
+        position: "fixed",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        background: "#000",
+        color,
+        touchAction: "none",
+      }}
+    >
+      {/* TOP */}
+
+      <div
         style={{
           position: "fixed",
-          inset: 0,
-          overflow: "hidden",
-          background: "#000",
-          color: stateColor,
-          touchAction: "none",
-          userSelect: "none",
+          top: 24,
+          left: 0,
+          right: 0,
+          zIndex: 30,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 20,
         }}
       >
-        {/* TOP STATUS */}
-
-        <div
+        <span
           style={{
-            position: "fixed",
-            top: 24,
-            left: 0,
-            right: 0,
-            zIndex: 30,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 16,
+            fontSize: 10,
+            letterSpacing: 3,
+            color,
+            textShadow:
+              `0 0 10px ${color}`,
           }}
         >
-          <span
-            style={{
-              fontSize: 12,
-              letterSpacing: 3,
-              color: stateColor,
-              textShadow:
-                `0 0 12px ${stateColor}`,
-            }}
-          >
-            {micOn
-              ? "VOICE READY"
-              : "VOICE OFF"}
-          </span>
+          {micOn
+            ? "VOICE READY"
+            : "VOICE OFF"}
+        </span>
 
-          <button
-            type="button"
-            onClick={resetMic}
-            style={{
-              border:
-                "1px solid rgba(80,160,255,.45)",
-              background:
-                "rgba(5,10,20,.9)",
-              color: "#8ab8ff",
-              borderRadius: 12,
-              padding:
-                "9px 14px",
-              fontSize: 11,
-              letterSpacing: 1,
-            }}
-          >
-            RESET MIC
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={resetMic}
+          style={{
+            height: 38,
+            padding: "0 16px",
+            borderRadius: 12,
+            border:
+              "1px solid rgba(79,163,255,.45)",
+            background:
+              "rgba(3,8,18,.75)",
+            color: "#8fc8ff",
+            letterSpacing: 1,
+            fontSize: 10,
+          }}
+        >
+          RESET MIC
+        </button>
+      </div>
 
-        {/* MAIN ORB */}
+      {/* ORB */}
+
+      <div
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          width:
+            "clamp(250px, 70vw, 280px)",
+          height:
+            "clamp(250px, 70vw, 280px)",
+          transform:
+            `translate(-50%, -50%) scale(${zoom})`,
+          transformOrigin: "center",
+          willChange: "transform",
+        }}
+      >
+        {/* GLOW */}
 
         <div
           style={{
             position: "absolute",
-            left: "50%",
-            top: "50%",
-            width: 310,
-            height: 310,
-            transform:
-              `translate(-50%, -50%) scale(${zoom})`,
-            transition:
-              "transform .2s ease",
+            inset: -55,
+            borderRadius: "50%",
+            background:
+              `radial-gradient(
+                circle,
+                ${color}55,
+                ${color}18 42%,
+                transparent 72%
+              )`,
+            filter: "blur(18px)",
+            animation:
+              state === "THINKING"
+                ? "noaBreathe 1.6s ease-in-out infinite"
+                : "noaBreathe 4.5s ease-in-out infinite",
           }}
-        >
-          {/* GLOW */}
+        />
 
-          <div
-            style={{
-              position: "absolute",
-              inset: -75,
-              borderRadius: "50%",
-              background:
-                `radial-gradient(circle, ${stateColor}55 0%, transparent 68%)`,
-              filter: "blur(24px)",
-              animation:
-                "noaGlow 2.4s ease-in-out infinite",
-            }}
-          />
+        {/* OUTER RINGS */}
 
-          {/* OUTER RING */}
-
-          <div
-            style={{
-              position: "absolute",
-              inset: 4,
-              borderRadius: "50%",
-              border:
-                `2px solid ${stateColor}`,
-              boxShadow:
-                `0 0 24px ${stateColor}99`,
-              animation:
-                "noaRotate 20s linear infinite",
-            }}
-          />
-
-          {/* SECOND RING */}
-
-          <div
-            style={{
-              position: "absolute",
-              inset: 25,
-              borderRadius: "50%",
-              border:
-                `1px solid ${stateColor}99`,
-              boxShadow:
-                `0 0 18px ${stateColor}55`,
-              animation:
-                "noaRotateReverse 14s linear infinite",
-            }}
-          />
-
-          {/* THIRD RING */}
-
-          <div
-            style={{
-              position: "absolute",
-              inset: 52,
-              borderRadius: "50%",
-              border:
-                `1px solid ${stateColor}66`,
-              animation:
-                "noaRotate 10s linear infinite",
-            }}
-          />
-
-          {/* CENTER */}
-
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 5,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {/* WAVEFORM */}
-
-            <div
-              style={{
-                height: 60,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 5,
-              }}
-            >
-              {[
-                12,
-                20,
-                30,
-                42,
-                25,
-                46,
-                32,
-                50,
-                28,
-                42,
-                22,
-                48,
-                30,
-                40,
-                25,
-                34,
-                20,
-                12,
-              ].map(
-                (height, index) => (
-                  <span
-                    key={index}
-                    style={{
-                      width: 4,
-                      height,
-                      borderRadius: 10,
-                      background:
-                        stateColor,
-                      boxShadow:
-                        `0 0 10px ${stateColor}`,
-                      animation:
-                        "noaWave .6s ease-in-out infinite alternate",
-                      animationDelay:
-                        `${index * 0.04}s`,
-                    }}
-                  />
-                )
-              )}
-            </div>
-
-            {/* STATE */}
-
-            <div
-              style={{
-                marginTop: 14,
-                fontSize: 14,
-                letterSpacing: 6,
-                color: stateColor,
-                textShadow:
-                  `0 0 18px ${stateColor}`,
-              }}
-            >
-              {state}
-            </div>
-          </div>
-
-          {/* ORBIT DOTS */}
-
-          {[
-            "0%",
-            "25%",
-            "50%",
-            "75%",
-          ].map(
-            (position, index) => (
-              <span
-                key={index}
-                style={{
-                  position: "absolute",
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  background:
-                    stateColor,
-                  boxShadow:
-                    `0 0 12px ${stateColor}`,
-                  left:
-                    index % 2 === 0
-                      ? position
-                      : "auto",
-                  right:
-                    index % 2 === 1
-                      ? position
-                      : "auto",
-                  top:
-                    index < 2
-                      ? "0%"
-                      : "auto",
-                  bottom:
-                    index >= 2
-                      ? "0%"
-                      : "auto",
-                  transform:
-                    "translate(-50%, -50%)",
-                }}
-              />
-            )
-          )}
-        </div>
-
-        {/* DRAGGABLE MIC */}
-
-        <button
-          type="button"
-          aria-label="NOA microphone"
-          onClick={toggleMic}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
+        <div
           style={{
-            position: "fixed",
-            left: mic.x,
-            top: mic.y,
-            width: 80,
-            height: 80,
-            padding: 0,
+            position: "absolute",
+            inset: 0,
             borderRadius: "50%",
             border:
-              `2px solid ${stateColor}`,
-            background:
-              `rgba(5,10,25,.92)`,
-            color: stateColor,
+              `2px solid ${color}`,
             boxShadow:
-              `0 0 30px ${stateColor}77`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100,
-            cursor: "grab",
-            touchAction: "none",
+              `0 0 18px ${color}88`,
+            animation:
+              "noaRotate 22s linear infinite",
+          }}
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            inset: 12,
+            borderRadius: "50%",
+            border:
+              `1px solid ${color}99`,
+            animation:
+              "noaRotateReverse 17s linear infinite",
+          }}
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            inset: 30,
+            borderRadius: "50%",
+            border:
+              `1px dashed ${color}66`,
+            animation:
+              "noaRotate 13s linear infinite",
+          }}
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            inset: 22,
+            borderRadius: "50%",
+            border:
+              `1px dashed ${color}55`,
+            animation:
+              "noaRotateReverse 27s linear infinite",
+          }}
+        />
+
+        {/* CENTER */}
+
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 5,
+            pointerEvents: "none",
           }}
         >
-          <svg
-            width="35"
-            height="35"
-            viewBox="0 0 32 32"
-            fill="none"
-          >
-            <rect
-              x="11"
-              y="3"
-              width="10"
-              height="17"
-              rx="5"
-              stroke="currentColor"
-              strokeWidth="2"
-            />
+          {/* WAVE */}
 
-            <path
-              d="M7 15C7 20 10.5 23 16 23C21.5 23 25 20 25 15"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-
-            <path
-              d="M16 23V28"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-
-            <path
-              d="M12 28H20"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
-
-        {/* TRANSCRIPT */}
-
-        {text && (
           <div
             style={{
-              position: "fixed",
+              position: "absolute",
               left: "50%",
-              bottom: 25,
+              top: "50%",
+              width: 150,
+              height: 30,
               transform:
-                "translateX(-50%)",
-              maxWidth: "80%",
-              textAlign: "center",
-              color: "#718096",
-              fontSize: 11,
-              zIndex: 20,
+                "translate(-50%, -50%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 3,
             }}
           >
-            {text}
+            {bars.map((height, index) => (
+              <i
+                key={index}
+                style={{
+                  display: "block",
+                  width: 2,
+                  height,
+                  borderRadius: 3,
+                  background: color,
+                  boxShadow:
+                    `0 0 7px ${color}`,
+                  animation:
+                    `noaWave ${
+                      state === "SPEAKING"
+                        ? ".45s"
+                        : state === "THINKING"
+                        ? ".3s"
+                        : "1s"
+                    } ease-in-out infinite alternate`,
+                  animationDelay:
+                    `${index * 0.04}s`,
+                }}
+              />
+            ))}
           </div>
-        )}
-      </main>
 
-      {/* ANIMATIONS */}
+          {/* STATE */}
 
-      <style>{`
-        @keyframes noaGlow {
-          0%, 100% {
+          <div
+            style={{
+              position: "absolute",
+              left: "50%",
+              top:
+                "calc(50% + 27px)",
+              transform:
+                "translateX(-50%)",
+              fontSize: 10,
+              lineHeight: 1,
+              letterSpacing: 3,
+              textTransform:
+                "uppercase",
+              whiteSpace: "nowrap",
+              color,
+              textShadow:
+                `0 0 10px ${color}`,
+            }}
+          >
+            {state}
+          </div>
+        </div>
+
+        {/* ORBIT POINTS */}
+
+        <span
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: -3,
+            width: 4,
+            height: 4,
+            borderRadius: "50%",
+            background: "#eaf6ff",
+            boxShadow:
+              `0 0 8px ${color}`,
+          }}
+        />
+
+        <span
+          style={{
+            position: "absolute",
+            right: 5,
+            top: 30,
+            width: 3,
+            height: 3,
+            borderRadius: "50%",
+            background: "#cfe8ff",
+          }}
+        />
+
+        <span
+          style={{
+            position: "absolute",
+            right: 4,
+            bottom: 28,
+            width: 4,
+            height: 4,
+            borderRadius: "50%",
+            background: "#eaf6ff",
+          }}
+        />
+
+        <span
+          style={{
+            position: "absolute",
+            left: "50%",
+            bottom: -3,
+            width: 4,
+            height: 4,
+            borderRadius: "50%",
+            background: "#cfe8ff",
+          }}
+        />
+
+        <span
+          style={{
+            position: "absolute",
+            left: 3,
+            bottom: 30,
+            width: 3,
+            height: 3,
+            borderRadius: "50%",
+            background: "#eaf6ff",
+          }}
+        />
+
+        <span
+          style={{
+            position: "absolute",
+            left: 5,
+            top: 30,
+            width: 3,
+            height: 3,
+            borderRadius: "50%",
+            background: "#cfe8ff",
+          }}
+        />
+      </div>
+
+      {/* FLOATING MIC */}
+
+      <button
+        ref={micRef}
+        type="button"
+        aria-label="Microphone"
+        aria-pressed={micOn}
+        onClick={toggleMic}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        style={{
+          position: "fixed",
+
+          right:
+            micPosition.right,
+
+          bottom:
+            micPosition.bottom,
+
+          width: 48,
+          height: 48,
+
+          borderRadius: "50%",
+
+          zIndex: 50,
+
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+
+          border:
+            `2px solid ${color}`,
+
+          background:
+            micOn
+              ? "rgba(53,232,135,.16)"
+              : "rgba(79,163,255,.12)",
+
+          color,
+
+          boxShadow:
+            micOn
+              ? "0 0 30px rgba(53,232,135,.42), inset 0 0 12px rgba(53,232,135,.12)"
+              : "0 0 22px rgba(79,163,255,.25), inset 0 0 10px rgba(79,163,255,.08)",
+
+          fontSize: 18,
+
+          userSelect: "none",
+          touchAction: "none",
+          cursor: draggingRef.current
+            ? "grabbing"
+            : "grab",
+
+          WebkitTapHighlightColor:
+            "transparent",
+
+          padding: 0,
+        }}
+      >
+        {/* MICROPHONE ICON */}
+
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 32 32"
+          fill="none"
+          aria-hidden="true"
+        >
+          <rect
+            x="11"
+            y="3"
+            width="10"
+            height="17"
+            rx="5"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+
+          <path
+            d="M7 15C7 20 10.5 23 16 23C21.5 23 25 20 25 15"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+
+          <path
+            d="M16 23V28"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+
+          <path
+            d="M12 28H20"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
+      </button>
+
+      {/* GLOBAL CSS */}
+
+      <style jsx global>{`
+        * {
+          box-sizing: border-box;
+        }
+
+        html,
+        body {
+          margin: 0;
+          width: 100%;
+          height: 100%;
+          background: #000;
+          overflow: hidden;
+        }
+
+        body {
+          font-family:
+            Inter,
+            Arial,
+            sans-serif;
+        }
+
+        button {
+          font-family: inherit;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        @keyframes noaBreathe {
+          0%,
+          100% {
+            opacity: 0.7;
             transform: scale(1);
-            opacity: .55;
           }
 
           50% {
-            transform: scale(1.08);
             opacity: 1;
+            transform: scale(1.05);
           }
         }
 
@@ -842,8 +914,8 @@ export default function Home() {
 
         @keyframes noaWave {
           from {
-            transform: scaleY(.35);
-            opacity: .45;
+            transform: scaleY(0.28);
+            opacity: 0.38;
           }
 
           to {
@@ -852,6 +924,6 @@ export default function Home() {
           }
         }
       `}</style>
-    </>
+    </main>
   );
-        }
+    }
