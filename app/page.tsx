@@ -1,183 +1,502 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-type MicState = "idle" | "listening" | "processing" | "speaking";
+type NoaState =
+  | "IDLE"
+  | "LISTENING"
+  | "THINKING"
+  | "SPEAKING"
+  | "EXECUTING"
+  | "COMPLETE";
+
+type SpeechRecognitionEventLike = Event & {
+  resultIndex: number;
+  results: {
+    length: number;
+    [index: number]: {
+      [index: number]: {
+        transcript: string;
+      };
+      isFinal: boolean;
+    };
+  };
+};
+
+type SpeechRecognitionLike = {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+  onstart: (() => void) | null;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+};
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+
+declare global {
+  interface Window {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  }
+}
 
 export default function Home() {
-  const [state, setState] = useState<MicState>("idle");
+  const [noaState, setNoaState] = useState<NoaState>("IDLE");
+  const [micOn, setMicOn] = useState(false);
   const [transcript, setTranscript] = useState("");
-  const [micPosition, setMicPosition] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [dragged, setDragged] = useState(false);
+  const [micPosition, setMicPosition] = useState({
+    right: 28,
+    bottom: 28,
+  });
 
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const draggingRef = useRef(false);
-  const dragStartRef = useRef({ x: 0, y: 0 });
-  const positionStartRef = useRef({ x: 0, y: 0 });
+  const pointerIdRef = useRef<number | null>(null);
+  const grabRef = useRef({ x: 0, y: 0 });
+  const draggedRef = useRef(false);
+  const micRef = useRef<HTMLButtonElement | null>(null);
 
-  const SpeechRecognition =
-    typeof window !== "undefined"
-      ? (window as any).SpeechRecognition ||
-        (window as any).webkitSpeechRecognition
-      : null;
+  const MIN_ZOOM = 0.55;
+  const MAX_ZOOM = 2.4;
+
+  /* ---------------------------------
+     MIC / SPEECH RECOGNITION
+  --------------------------------- */
 
   useEffect(() => {
-    if (!SpeechRecognition) return;
+    const Recognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    const recognition = new SpeechRecognition();
+    if (!Recognition) {
+      recognitionRef.current = null;
+      return;
+    }
 
+    const recognition = new Recognition();
+
+    recognition.lang = "en-US";
     recognition.continuous = false;
     recognition.interimResults = true;
-    recognition.lang = "en-US";
 
     recognition.onstart = () => {
-      setState("listening");
+      setMicOn(true);
+      setNoaState("LISTENING");
     };
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event) => {
       let text = "";
 
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      for (
+        let i = event.resultIndex;
+        i < event.results.length;
+        i++
+      ) {
         text += event.results[i][0].transcript;
       }
 
-      setTranscript(text);
+      const clean = text.trim();
+
+      if (!clean) return;
+
+      setTranscript(clean);
+
+      if (event.results[event.results.length - 1].isFinal) {
+        setNoaState("THINKING");
+
+        setTimeout(() => {
+          executeCommand(clean);
+        }, 350);
+      }
     };
 
     recognition.onerror = () => {
-      setState("idle");
+      setNoaState("IDLE");
     };
 
     recognition.onend = () => {
-      setState((current) =>
-        current === "listening" ? "processing" : current
-      );
-
-      setTimeout(() => {
-        setState("idle");
-      }, 900);
+      /*
+       * IMPORTANT:
+       * Recognition ending does NOT turn the MIC visual state off.
+       * User controls the green/blue state by pressing the mic.
+       */
+      if (!micOnRef.current) {
+        setNoaState("IDLE");
+      }
     };
 
     recognitionRef.current = recognition;
 
     return () => {
       try {
+        recognition.abort();
+      } catch {}
+    };
+  }, []);
+
+  const micOnRef = useRef(false);
+
+  useEffect(() => {
+    micOnRef.current = micOn;
+  }, [micOn]);
+
+  /* ---------------------------------
+     STATE
+  --------------------------------- */
+
+  function changeState(next: NoaState) {
+    setNoaState(next);
+  }
+
+  /* ---------------------------------
+     SPEAK
+  --------------------------------- */
+
+  function speak(text: string) {
+    if (!("speechSynthesis" in window)) return;
+
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.02;
+    utterance.pitch = 1;
+
+    utterance.onstart = () => {
+      changeState("SPEAKING");
+    };
+
+    utterance.onend = () => {
+      changeState(micOnRef.current ? "LISTENING" : "IDLE");
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  /* ---------------------------------
+     COMMAND ENGINE
+  --------------------------------- */
+
+  function executeCommand(input: string) {
+    const text = input.trim().toLowerCase();
+
+    if (!text) {
+      changeState(micOnRef.current ? "LISTENING" : "IDLE");
+      return;
+    }
+
+    // ZOOM IN
+    if (
+      text === "zoom in" ||
+      text === "zoom closer" ||
+      text === "make it bigger"
+    ) {
+      setZoom((current) =>
+        Math.min(MAX_ZOOM, current + 0.15)
+      );
+
+      changeState("SPEAKING");
+      speak("Zooming in.");
+      return;
+    }
+
+    // ZOOM OUT
+    if (
+      text === "zoom out" ||
+      text === "zoom away" ||
+      text === "make it smaller"
+    ) {
+      setZoom((current) =>
+        Math.max(MIN_ZOOM, current - 0.15)
+      );
+
+      changeState("SPEAKING");
+      speak("Zooming out.");
+      return;
+    }
+
+    // RESET ZOOM
+    if (
+      text === "reset zoom" ||
+      text === "normal size" ||
+      text === "reset orb"
+    ) {
+      setZoom(1);
+
+      changeState("SPEAKING");
+      speak("Zoom reset.");
+      return;
+    }
+
+    // STATUS
+    if (
+      text === "status" ||
+      text === "what is your state" ||
+      text === "what state are you in"
+    ) {
+      changeState("SPEAKING");
+      speak(`NOA is ${noaState.toLowerCase()}.`);
+      return;
+    }
+
+    // OPEN URL
+    const urlMatch = text.match(
+      /^(?:open|go to|visit)\s+(https?:\/\/\S+|www\.\S+)$/
+    );
+
+    if (urlMatch) {
+      let url = urlMatch[1];
+
+      if (url.startsWith("www.")) {
+        url = `https://${url}`;
+      }
+
+      changeState("EXECUTING");
+
+      const newWindow = window.open(
+        url,
+        "_blank",
+        "noopener,noreferrer"
+      );
+
+      setTimeout(() => {
+        if (newWindow) {
+          speak("Opening it.");
+        } else {
+          speak("The browser blocked the new tab.");
+        }
+      }, 300);
+
+      return;
+    }
+
+    // UNKNOWN COMMAND
+    changeState("SPEAKING");
+
+    speak(
+      `I heard: ${input}. This command is not connected to an executable action yet.`
+    );
+  }
+
+  /* ---------------------------------
+     MIC CLICK
+  --------------------------------- */
+
+  function toggleMic() {
+    if (draggedRef.current) {
+      draggedRef.current = false;
+      return;
+    }
+
+    const recognition = recognitionRef.current;
+
+    if (!micOn) {
+      /*
+       * VISUAL STATE CHANGES IMMEDIATELY.
+       * This fixes the old delayed color problem.
+       */
+      setMicOn(true);
+      micOnRef.current = true;
+      setNoaState("LISTENING");
+
+      if (recognition) {
+        try {
+          recognition.start();
+        } catch {
+          // Recognition may already be running.
+        }
+      }
+
+      return;
+    }
+
+    // TURN MIC OFF
+    setMicOn(false);
+    micOnRef.current = false;
+    setNoaState("IDLE");
+
+    if (recognition) {
+      try {
         recognition.stop();
       } catch {}
-    };
-  }, [SpeechRecognition]);
-
-  const startListening = () => {
-    if (!recognitionRef.current) {
-      setState("listening");
-
-      setTimeout(() => {
-        setState("idle");
-      }, 1500);
-
-      return;
     }
+  }
 
+  /* ---------------------------------
+     RESET MIC
+  --------------------------------- */
+
+  function resetMic() {
+    const recognition = recognitionRef.current;
+
+    setMicOn(false);
+    micOnRef.current = false;
+    setNoaState("IDLE");
     setTranscript("");
 
-    try {
-      recognitionRef.current.start();
-    } catch {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    if (recognition) {
       try {
-        recognitionRef.current.stop();
+        recognition.stop();
       } catch {}
 
-      setTimeout(() => {
-        try {
-          recognitionRef.current.start();
-        } catch {}
-      }, 200);
+      try {
+        recognition.abort();
+      } catch {}
     }
-  };
+  }
 
-  const stopListening = () => {
-    if (!recognitionRef.current) {
-      setState("processing");
+  /* ---------------------------------
+     MIC DRAG
+  --------------------------------- */
 
-      setTimeout(() => {
-        setState("idle");
-      }, 700);
-
-      return;
-    }
-
-    try {
-      recognitionRef.current.stop();
-    } catch {}
-
-    setState("processing");
-  };
-
-  const handlePointerDown = (
+  function handlePointerDown(
     event: React.PointerEvent<HTMLButtonElement>
-  ) => {
-    event.currentTarget.setPointerCapture(event.pointerId);
+  ) {
+    if (event.button !== 0) return;
 
+    const element = micRef.current;
+
+    if (!element) return;
+
+    const rect = element.getBoundingClientRect();
+
+    pointerIdRef.current = event.pointerId;
     draggingRef.current = true;
+    draggedRef.current = false;
 
-    dragStartRef.current = {
-      x: event.clientX,
-      y: event.clientY,
+    grabRef.current = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
     };
 
-    positionStartRef.current = {
-      x: micPosition.x,
-      y: micPosition.y,
-    };
+    element.setPointerCapture(event.pointerId);
 
-    startListening();
-  };
+    event.preventDefault();
+  }
 
-  const handlePointerMove = (
+  function handlePointerMove(
     event: React.PointerEvent<HTMLButtonElement>
-  ) => {
+  ) {
     if (!draggingRef.current) return;
 
-    const dx = event.clientX - dragStartRef.current.x;
-    const dy = event.clientY - dragStartRef.current.y;
+    if (pointerIdRef.current !== event.pointerId) return;
+
+    const element = micRef.current;
+
+    if (!element) return;
+
+    const width = element.offsetWidth;
+    const height = element.offsetHeight;
+
+    const x =
+      event.clientX - grabRef.current.x;
+
+    const y =
+      event.clientY - grabRef.current.y;
+
+    const left = Math.max(
+      0,
+      Math.min(window.innerWidth - width, x)
+    );
+
+    const top = Math.max(
+      0,
+      Math.min(window.innerHeight - height, y)
+    );
+
+    const right = window.innerWidth - left - width;
+    const bottom = window.innerHeight - top - height;
+
+    if (
+      Math.abs(event.movementX) > 1 ||
+      Math.abs(event.movementY) > 1
+    ) {
+      draggedRef.current = true;
+      setDragged(true);
+    }
 
     setMicPosition({
-      x: positionStartRef.current.x + dx,
-      y: positionStartRef.current.y + dy,
+      right,
+      bottom,
     });
-  };
+  }
 
-  const handlePointerUp = (
+  function handlePointerUp(
     event: React.PointerEvent<HTMLButtonElement>
-  ) => {
+  ) {
+    if (pointerIdRef.current !== event.pointerId) return;
+
     draggingRef.current = false;
 
-    try {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    } catch {}
+    const element = micRef.current;
 
-    stopListening();
-  };
+    if (element?.hasPointerCapture(event.pointerId)) {
+      element.releasePointerCapture(event.pointerId);
+    }
 
-  const resetPosition = () => {
-    setMicPosition({ x: 0, y: 0 });
-  };
+    pointerIdRef.current = null;
 
-  const stateText = {
-    idle: "IDLE",
-    listening: "LISTENING",
-    processing: "THINKING",
-    speaking: "SPEAKING",
-  }[state];
+    if (draggedRef.current) {
+      setTimeout(() => {
+        setDragged(false);
+      }, 150);
+    }
+  }
 
-  const stateColor = {
-    idle: "#1683ff",
-    listening: "#00e5ff",
-    processing: "#a855f7",
-    speaking: "#22c55e",
-  }[state];
+  /* ---------------------------------
+     MOUSE WHEEL ZOOM
+  --------------------------------- */
+
+  function handleWheel(
+    event: React.WheelEvent<HTMLDivElement>
+  ) {
+    event.preventDefault();
+
+    const direction = event.deltaY < 0 ? 1 : -1;
+
+    setZoom((current) =>
+      Math.max(
+        MIN_ZOOM,
+        Math.min(
+          MAX_ZOOM,
+          current + direction * 0.08
+        )
+      )
+    );
+  }
+
+  /* ---------------------------------
+     WAVEFORM
+  --------------------------------- */
+
+  const bars = [
+    5, 8, 12, 18, 11, 23, 16, 29, 19,
+    24, 14, 9, 6, 10, 16, 22, 15, 20,
+    27, 17, 10, 14, 20, 25, 15, 9, 5
+  ];
+
+  const stateColor =
+    noaState === "THINKING"
+      ? "#a855f7"
+      : noaState === "SPEAKING"
+      ? "#38bdf8"
+      : noaState === "EXECUTING"
+      ? "#f59e0b"
+      : noaState === "COMPLETE"
+      ? "#35e887"
+      : "#4fa3ff";
 
   return (
-    <main className="noaPage">
+    <main className="noa-app">
       <style jsx global>{`
         * {
           box-sizing: border-box;
@@ -188,567 +507,445 @@ export default function Home() {
           margin: 0;
           padding: 0;
           width: 100%;
-          min-height: 100%;
+          height: 100%;
           background: #000;
+          overflow: hidden;
         }
 
         body {
-          overflow: hidden;
           font-family:
             Inter,
-            ui-sans-serif,
-            system-ui,
-            -apple-system,
-            BlinkMacSystemFont,
-            "Segoe UI",
+            Arial,
+            Helvetica,
             sans-serif;
+          color: #4fa3ff;
         }
 
         button {
-          font: inherit;
+          font-family: inherit;
         }
 
-        .noaPage {
-          position: relative;
-          width: 100vw;
-          height: 100vh;
-          min-height: 100svh;
+        .noa-app {
+          position: fixed;
+          inset: 0;
+          width: 100%;
+          height: 100%;
           overflow: hidden;
           background:
             radial-gradient(
-              circle at 50% 45%,
-              rgba(0, 67, 130, 0.16),
-              transparent 34%
-            ),
-            #000;
-          color: white;
-          user-select: none;
+              circle at center,
+              rgba(5, 20, 45, 0.18),
+              #000 58%
+            );
+          display: flex;
+          align-items: center;
+          justify-content: center;
           touch-action: none;
         }
 
-        .backgroundGlow {
-          position: absolute;
-          width: 75vw;
-          height: 75vw;
-          max-width: 700px;
-          max-height: 700px;
-          left: 50%;
-          top: 46%;
-          transform: translate(-50%, -50%);
-          border-radius: 50%;
-          background: rgba(0, 92, 255, 0.06);
-          filter: blur(80px);
+        /* -----------------------------
+           TOP STATUS
+        ----------------------------- */
+
+        .topbar {
+          position: fixed;
+          top: 28px;
+          left: 0;
+          right: 0;
+          z-index: 50;
+
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 18px;
           pointer-events: none;
         }
 
-        .orbArea {
-          position: absolute;
-          left: 50%;
-          top: 46%;
-          width: min(78vw, 620px);
-          aspect-ratio: 1;
-          transform: translate(-50%, -50%);
+        .voice-status {
+          font-size: 12px;
+          letter-spacing: 3px;
+          text-transform: uppercase;
+          color: ${micOn ? "#35e887" : "#65748a"};
+          text-shadow:
+            0 0 14px
+            ${micOn
+              ? "rgba(53,232,135,.45)"
+              : "rgba(79,163,255,.25)"};
         }
 
-        .orb {
+        .reset-button {
+          pointer-events: auto;
+          border: 1px solid rgba(79,163,255,.35);
+          background: rgba(3,8,18,.75);
+          color: #7fb9ff;
+          border-radius: 14px;
+          padding: 10px 16px;
+          font-size: 11px;
+          letter-spacing: 1px;
+          cursor: pointer;
+          transition: .2s ease;
+        }
+
+        .reset-button:hover {
+          border-color: #4fa3ff;
+          box-shadow:
+            0 0 18px
+            rgba(79,163,255,.22);
+        }
+
+        /* -----------------------------
+           ORB
+        ----------------------------- */
+
+        .orb-wrapper {
+          width: 300px;
+          height: 300px;
+          position: relative;
+          transform-origin: center;
+          transition: transform .18s ease-out;
+          will-change: transform;
+        }
+
+        .orb-glow {
+          position: absolute;
+          inset: -70px;
+          border-radius: 50%;
+
+          background:
+            radial-gradient(
+              circle,
+              ${stateColor}55 0%,
+              ${stateColor}18 42%,
+              transparent 72%
+            );
+
+          filter: blur(20px);
+
+          animation:
+            orb-breathe
+            ${noaState === "EXECUTING"
+              ? "0.75s"
+              : noaState === "THINKING"
+              ? "1.4s"
+              : "4.5s"}
+            ease-in-out infinite;
+        }
+
+        @keyframes orb-breathe {
+          0%,
+          100% {
+            opacity: .65;
+            transform: scale(1);
+          }
+
+          50% {
+            opacity: 1;
+            transform: scale(1.08);
+          }
+        }
+
+        .orb-svg {
           position: absolute;
           inset: 0;
-          border-radius: 50%;
-          transition:
-            filter 0.35s ease,
-            transform 0.35s ease;
+          width: 100%;
+          height: 100%;
+          overflow: visible;
         }
 
-        .orb.listening {
-          transform: scale(1.035);
+        .ring-one {
+          transform-origin: 150px 150px;
+          animation:
+            rotate-one
+            22s
+            linear
+            infinite;
         }
 
-        .orb.processing {
-          transform: scale(1.02);
+        .ring-two {
+          transform-origin: 150px 150px;
+          animation:
+            rotate-two
+            17s
+            linear
+            infinite;
         }
 
-        .orb.speaking {
-          transform: scale(1.04);
+        .ring-three {
+          transform-origin: 150px 150px;
+          animation:
+            rotate-three
+            13s
+            linear
+            infinite;
         }
 
-        .outerRing {
+        @keyframes rotate-one {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        @keyframes rotate-two {
+          from {
+            transform: rotate(360deg);
+          }
+
+          to {
+            transform: rotate(0deg);
+          }
+        }
+
+        @keyframes rotate-three {
+          to {
+            transform: rotate(-360deg);
+          }
+        }
+
+        /* -----------------------------
+           CENTER
+        ----------------------------- */
+
+        .center {
           position: absolute;
-          inset: 3%;
-          border-radius: 50%;
-          border: 2px solid ${stateColor};
-          box-shadow:
-            0 0 12px ${stateColor},
-            inset 0 0 20px rgba(0, 90, 255, 0.08);
-          transition:
-            border-color 0.3s ease,
-            box-shadow 0.3s ease;
-        }
+          inset: 0;
+          z-index: 5;
 
-        .ringOne {
-          animation: rotateRing 20s linear infinite;
-        }
-
-        .ringTwo {
-          inset: 10%;
-          border: 1px solid rgba(80, 160, 255, 0.18);
-          animation: rotateRingReverse 14s linear infinite;
-        }
-
-        .ringThree {
-          inset: 18%;
-          border: 1px solid rgba(0, 120, 255, 0.1);
-        }
-
-        .dot {
-          position: absolute;
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: ${stateColor};
-          box-shadow: 0 0 12px ${stateColor};
-          transition:
-            background 0.3s ease,
-            box-shadow 0.3s ease;
-        }
-
-        .dot:nth-child(1) {
-          left: 50%;
-          top: 3%;
-          transform: translateX(-50%);
-        }
-
-        .dot:nth-child(2) {
-          right: 9%;
-          top: 25%;
-        }
-
-        .dot:nth-child(3) {
-          right: 3%;
-          top: 50%;
-          transform: translateY(-50%);
-        }
-
-        .dot:nth-child(4) {
-          right: 9%;
-          bottom: 25%;
-        }
-
-        .dot:nth-child(5) {
-          left: 50%;
-          bottom: 3%;
-          transform: translateX(-50%);
-        }
-
-        .dot:nth-child(6) {
-          left: 9%;
-          bottom: 25%;
-        }
-
-        .dot:nth-child(7) {
-          left: 3%;
-          top: 50%;
-          transform: translateY(-50%);
-        }
-
-        .dot:nth-child(8) {
-          left: 9%;
-          top: 25%;
-        }
-
-        .core {
-          position: absolute;
-          inset: 25%;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          border-radius: 50%;
-          background:
-            radial-gradient(
-              circle,
-              rgba(3, 22, 45, 0.95),
-              rgba(0, 5, 14, 0.95) 65%,
-              rgba(0, 0, 0, 0.8)
-            );
-          box-shadow:
-            0 0 50px rgba(0, 92, 255, 0.12),
-            inset 0 0 40px rgba(0, 110, 255, 0.08);
-        }
 
-        .waveform {
-          height: 90px;
-          width: 62%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 5px;
-        }
-
-        .bar {
-          width: 5px;
-          min-height: 8px;
-          height: 18px;
-          border-radius: 20px;
-          background: ${stateColor};
-          box-shadow: 0 0 12px ${stateColor};
-          transition:
-            background 0.3s ease,
-            box-shadow 0.3s ease;
-          animation: wave 1.2s ease-in-out infinite;
-          animation-play-state: ${state === "idle" ? "paused" : "running"};
-        }
-
-        .bar:nth-child(1) {
-          animation-delay: -0.1s;
-        }
-
-        .bar:nth-child(2) {
-          animation-delay: -0.25s;
-        }
-
-        .bar:nth-child(3) {
-          animation-delay: -0.4s;
-        }
-
-        .bar:nth-child(4) {
-          animation-delay: -0.55s;
-        }
-
-        .bar:nth-child(5) {
-          animation-delay: -0.7s;
-        }
-
-        .bar:nth-child(6) {
-          animation-delay: -0.85s;
-        }
-
-        .bar:nth-child(7) {
-          animation-delay: -1s;
-        }
-
-        .bar:nth-child(8) {
-          animation-delay: -0.65s;
-        }
-
-        .bar:nth-child(9) {
-          animation-delay: -0.35s;
-        }
-
-        .bar:nth-child(10) {
-          animation-delay: -0.15s;
-        }
-
-        .stateText {
-          margin-top: -3px;
-          color: ${stateColor};
-          font-size: clamp(14px, 3vw, 20px);
-          letter-spacing: 8px;
-          font-weight: 500;
-          text-shadow: 0 0 15px ${stateColor};
-          transition:
-            color 0.3s ease,
-            text-shadow 0.3s ease;
-        }
-
-        .transcript {
-          position: absolute;
-          left: 50%;
-          bottom: 13%;
-          transform: translateX(-50%);
-          width: min(85vw, 600px);
-          min-height: 30px;
-          text-align: center;
-          color: rgba(190, 215, 255, 0.8);
-          font-size: 14px;
-          line-height: 1.5;
-          padding: 0 12px;
           pointer-events: none;
         }
 
-        .micButton {
-          position: absolute;
-          left: 50%;
-          bottom: 7%;
-          width: 116px;
-          height: 116px;
-          transform: translate(calc(-50% + ${micPosition.x}px), ${micPosition.y}px);
-          border-radius: 50%;
-          border: 3px solid ${stateColor};
-          background: rgba(0, 8, 20, 0.94);
-          color: ${stateColor};
+        .wave {
+          height: 44px;
+          width: 170px;
+
           display: flex;
           align-items: center;
           justify-content: center;
-          cursor: grab;
-          outline: none;
-          box-shadow:
-            0 0 12px ${stateColor},
-            0 0 35px rgba(0, 90, 255, 0.25),
-            inset 0 0 20px rgba(0, 100, 255, 0.08);
-          transition:
-            border-color 0.25s ease,
-            color 0.25s ease,
-            box-shadow 0.25s ease,
-            transform 0.1s linear;
-          z-index: 20;
+
+          gap: 4px;
         }
 
-        .micButton:active {
+        .wave-bar {
+          display: block;
+          width: 3px;
+          border-radius: 8px;
+
+          background: ${stateColor};
+
+          box-shadow:
+            0 0 9px
+            ${stateColor}bb;
+
+          animation:
+            wave-animation
+            ${noaState === "THINKING"
+              ? ".42s"
+              : noaState === "SPEAKING"
+              ? ".25s"
+              : ".8s"}
+            ease-in-out infinite
+            alternate;
+        }
+
+        @keyframes wave-animation {
+          from {
+            transform: scaleY(.25);
+            opacity: .35;
+          }
+
+          to {
+            transform: scaleY(1);
+            opacity: 1;
+          }
+        }
+
+        .state {
+          margin-top: 16px;
+
+          color: ${stateColor};
+
+          font-size: 12px;
+          letter-spacing: 5px;
+          text-transform: uppercase;
+
+          text-shadow:
+            0 0 12px
+            ${stateColor}aa;
+        }
+
+        /* -----------------------------
+           MIC
+        ----------------------------- */
+
+        .mic {
+          position: fixed;
+
+          right: ${micPosition.right}px;
+          bottom: ${micPosition.bottom}px;
+
+          width: 76px;
+          height: 76px;
+
+          z-index: 100;
+
+          border-radius: 50%;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          cursor: grab;
+
+          user-select: none;
+          -webkit-user-select: none;
+
+          touch-action: none;
+
+          -webkit-tap-highlight-color: transparent;
+
+          transition:
+            border-color .18s ease,
+            background .18s ease,
+            box-shadow .18s ease,
+            color .18s ease;
+
+          ${
+            micOn
+              ? `
+                border: 2px solid #35e887;
+                color: #35e887;
+                background: rgba(53,232,135,.10);
+                box-shadow:
+                  0 0 28px rgba(53,232,135,.45),
+                  inset 0 0 16px rgba(53,232,135,.10);
+              `
+              : `
+                border: 2px solid #4fa3ff;
+                color: #4fa3ff;
+                background: rgba(79,163,255,.08);
+                box-shadow:
+                  0 0 25px rgba(79,163,255,.28),
+                  inset 0 0 12px rgba(79,163,255,.08);
+              `
+          }
+        }
+
+        .mic.dragging {
           cursor: grabbing;
         }
 
-        .micButton.listening {
-          box-shadow:
-            0 0 18px ${stateColor},
-            0 0 55px ${stateColor},
-            inset 0 0 30px rgba(0, 200, 255, 0.15);
-        }
-
-        .micButton::before {
-          content: "";
-          position: absolute;
-          inset: -12px;
-          border-radius: 50%;
-          border: 1px solid ${stateColor};
-          opacity: 0.35;
-          animation: pulse 1.6s ease-out infinite;
-        }
-
-        .micButton::after {
-          content: "";
-          position: absolute;
-          inset: -25px;
-          border-radius: 50%;
-          border: 1px solid ${stateColor};
-          opacity: 0.12;
-          animation: pulse 1.6s ease-out infinite 0.5s;
-        }
-
-        .micIcon {
-          position: relative;
-          z-index: 2;
-          width: 38px;
-          height: 48px;
-        }
-
-        .micBody {
-          position: absolute;
-          left: 50%;
-          top: 0;
-          width: 17px;
-          height: 30px;
-          transform: translateX(-50%);
-          border: 3px solid currentColor;
-          border-radius: 12px;
-        }
-
-        .micArc {
-          position: absolute;
-          left: 50%;
-          top: 17px;
-          width: 38px;
-          height: 30px;
-          transform: translateX(-50%);
-          border: 3px solid currentColor;
-          border-top: 0;
-          border-radius: 0 0 22px 22px;
-        }
-
-        .micStem {
-          position: absolute;
-          left: 50%;
-          top: 43px;
-          width: 3px;
-          height: 7px;
-          transform: translateX(-50%);
-          background: currentColor;
-          border-radius: 3px;
-        }
-
-        .micBase {
-          position: absolute;
-          left: 50%;
-          bottom: -1px;
-          width: 24px;
-          height: 3px;
-          transform: translateX(-50%);
-          background: currentColor;
-          border-radius: 3px;
-        }
-
-        .resetButton {
-          position: absolute;
-          top: 22px;
-          right: 22px;
-          z-index: 30;
-          padding: 8px 12px;
-          border: 1px solid rgba(80, 140, 220, 0.3);
-          border-radius: 10px;
-          background: rgba(0, 20, 40, 0.5);
-          color: rgba(180, 210, 255, 0.65);
-          font-size: 11px;
-          letter-spacing: 1px;
-          cursor: pointer;
-        }
-
-        .browserWarning {
-          position: absolute;
-          left: 50%;
-          top: 22px;
-          transform: translateX(-50%);
-          color: rgba(150, 180, 220, 0.55);
-          font-size: 10px;
-          letter-spacing: 1px;
-          text-align: center;
+        .mic-icon {
+          width: 32px;
+          height: 32px;
+          display: block;
           pointer-events: none;
         }
 
-        @keyframes rotateRing {
-          from {
-            transform: rotate(0deg);
-          }
+        .transcript {
+          position: fixed;
+          left: 50%;
+          bottom: 32px;
+          transform: translateX(-50%);
 
-          to {
-            transform: rotate(360deg);
-          }
-        }
+          max-width: min(80vw, 500px);
 
-        @keyframes rotateRingReverse {
-          from {
-            transform: rotate(360deg);
-          }
+          color: #8aa1ba;
+          font-size: 11px;
+          letter-spacing: 1px;
+          text-align: center;
 
-          to {
-            transform: rotate(0deg);
-          }
-        }
+          opacity: ${transcript ? 1 : 0};
 
-        @keyframes wave {
-          0%,
-          100% {
-            height: 12px;
-          }
+          transition: opacity .2s ease;
 
-          50% {
-            height: 55px;
-          }
-        }
-
-        @keyframes pulse {
-          0% {
-            transform: scale(0.9);
-            opacity: 0.35;
-          }
-
-          70% {
-            transform: scale(1.25);
-            opacity: 0;
-          }
-
-          100% {
-            transform: scale(1.25);
-            opacity: 0;
-          }
+          pointer-events: none;
         }
 
         @media (max-width: 600px) {
-          .orbArea {
-            width: 86vw;
-            top: 43%;
+          .orb-wrapper {
+            width: 280px;
+            height: 280px;
           }
 
-          .micButton {
-            width: 92px;
-            height: 92px;
-            bottom: 8%;
+          .topbar {
+            top: 22px;
           }
 
-          .micIcon {
-            transform: scale(0.82);
-          }
-
-          .transcript {
-            bottom: 20%;
-            font-size: 12px;
+          .mic {
+            width: 72px;
+            height: 72px;
           }
         }
 
-        @media (prefers-reduced-motion: reduce) {
-          .ringOne,
-          .ringTwo,
-          .bar,
-          .micButton::before,
-          .micButton::after {
-            animation: none !important;
+        @media (max-width: 380px) {
+          .orb-wrapper {
+            width: 245px;
+            height: 245px;
           }
         }
       `}</style>
 
-      <div className="backgroundGlow" />
+      {/* TOP */}
+      <div className="topbar">
+        <div className="voice-status">
+          {micOn ? "VOICE READY" : "VOICE OFF"}
+        </div>
 
-      <button className="resetButton" onClick={resetPosition}>
-        RESET MIC
-      </button>
-
-      <div className="browserWarning">
-        {SpeechRecognition ? "VOICE READY" : "VOICE API UNAVAILABLE"}
+        <button
+          className="reset-button"
+          onClick={resetMic}
+          type="button"
+        >
+          RESET MIC
+        </button>
       </div>
 
-      <section className="orbArea">
-        <div className={`orb ${state}`}>
-          <div className="outerRing ringOne" />
-          <div className="outerRing ringTwo" />
-          <div className="outerRing ringThree" />
-
-          <span className="dot" />
-          <span className="dot" />
-          <span className="dot" />
-          <span className="dot" />
-          <span className="dot" />
-          <span className="dot" />
-          <span className="dot" />
-          <span className="dot" />
-
-          <div className="core">
-            <div className="waveform">
-              <span className="bar" />
-              <span className="bar" />
-              <span className="bar" />
-              <span className="bar" />
-              <span className="bar" />
-              <span className="bar" />
-              <span className="bar" />
-              <span className="bar" />
-              <span className="bar" />
-              <span className="bar" />
-            </div>
-
-            <div className="stateText">{stateText}</div>
-          </div>
-        </div>
-      </section>
-
-      {transcript && (
-        <div className="transcript">
-          {transcript}
-        </div>
-      )}
-
-      <button
-        className={`micButton ${state}`}
-        aria-label="NOA microphone"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
+      {/* ORB */}
+      <div
+        className="orb-wrapper"
+        style={{
+          transform: `scale(${zoom})`,
+        }}
+        onWheel={handleWheel}
       >
-        <span className="micIcon">
-          <span className="micBody" />
-          <span className="micArc" />
-          <span className="micStem" />
-          <span className="micBase" />
-        </span>
-      </button>
-    </main>
-  );
-           }
+        <div className="orb-glow" />
+
+        <svg
+          className="orb-svg"
+          viewBox="0 0 300 300"
+          aria-hidden="true"
+        >
+          <defs>
+            <filter
+              id="glow"
+              x="-80%"
+              y="-80%"
+              width="260%"
+              height="260%"
+            >
+              <feGaussianBlur
+                stdDeviation="5"
+                result="blur"
+              />
+
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+
+            <radialGradient id="core">
+              <stop
+                offset="0"
+                stopColor="#030914"
+              />
+
+              <stop
+                offset="1"
+                stopColor="#000"
+              />
+            </radialGr
