@@ -1,508 +1,606 @@
-'use client'
+"use client";
 
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from "react";
 
-type NoaState = 'idle' | 'listening' | 'processing' | 'speaking'
+type MicState = "idle" | "listening" | "processing" | "speaking";
 
-const bars = [
-  7, 12, 18, 10, 24, 34, 20, 42, 27, 18, 31, 44, 23, 12, 29, 38,
-  20, 30, 43, 25, 16, 28, 40, 22, 13, 8,
-]
+export default function Home() {
+  const [state, setState] = useState<MicState>("idle");
+  const [transcript, setTranscript] = useState("");
+  const [micPosition, setMicPosition] = useState({ x: 0, y: 0 });
 
-export default function Page() {
-  const [state, setState] = useState<NoaState>('idle')
-  const [micPosition, setMicPosition] = useState({ x: 0, y: 0 })
-  const [dragging, setDragging] = useState(false)
+  const recognitionRef = useRef<any>(null);
+  const draggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const positionStartRef = useRef({ x: 0, y: 0 });
 
-  const dragRef = useRef({
-    active: false,
-    pointerId: -1,
-    startX: 0,
-    startY: 0,
-    startMicX: 0,
-    startMicY: 0,
-    moved: false,
-  })
-
-  const recognitionRef = useRef<any>(null)
-
-  const stateLabel = {
-    idle: 'IDLE',
-    listening: 'LISTENING',
-    processing: 'THINKING',
-    speaking: 'SPEAKING',
-  }[state]
-
-  const startListening = () => {
-    setState('listening')
-
-    const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition
-
-    if (!SpeechRecognition) {
-      return
-    }
-
-    try {
-      const recognition = new SpeechRecognition()
-
-      recognition.continuous = false
-      recognition.interimResults = true
-      recognition.lang = 'en-US'
-
-      recognition.onresult = (event: any) => {
-        const result = event.results?.[0]?.[0]?.transcript || ''
-
-        if (result.trim()) {
-          setState('processing')
-
-          // Temporary processing/speaking simulation.
-          // Replace this section later with NOA's actual AI backend.
-          window.setTimeout(() => {
-            setState('speaking')
-
-            window.setTimeout(() => {
-              setState('idle')
-            }, 1800)
-          }, 700)
-        }
-      }
-
-      recognition.onerror = () => {
-        setState('idle')
-      }
-
-      recognition.onend = () => {
-        if (state === 'listening') {
-          setState('idle')
-        }
-      }
-
-      recognitionRef.current = recognition
-      recognition.start()
-    } catch {
-      setState('idle')
-    }
-  }
-
-  const stopListening = () => {
-    try {
-      recognitionRef.current?.stop()
-    } catch {}
-
-    recognitionRef.current = null
-    setState('idle')
-  }
-
-  const handleMicClick = () => {
-    if (dragRef.current.moved) {
-      return
-    }
-
-    if (state === 'idle') {
-      startListening()
-      return
-    }
-
-    if (state === 'listening') {
-      stopListening()
-      return
-    }
-
-    if (state === 'processing' || state === 'speaking') {
-      stopListening()
-    }
-  }
-
-  const handlePointerDown = (
-    event: React.PointerEvent<HTMLButtonElement>,
-  ) => {
-    event.currentTarget.setPointerCapture(event.pointerId)
-
-    dragRef.current = {
-      active: true,
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      startMicX: micPosition.x,
-      startMicY: micPosition.y,
-      moved: false,
-    }
-
-    setDragging(true)
-  }
-
-  const handlePointerMove = (
-    event: React.PointerEvent<HTMLButtonElement>,
-  ) => {
-    const drag = dragRef.current
-
-    if (!drag.active || drag.pointerId !== event.pointerId) {
-      return
-    }
-
-    const dx = event.clientX - drag.startX
-    const dy = event.clientY - drag.startY
-
-    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
-      drag.moved = true
-    }
-
-    const buttonSize = window.innerWidth <= 480 ? 74 : 92
-
-    const halfButton = buttonSize / 2
-
-    const maxX = window.innerWidth / 2 - halfButton - 8
-    const minX = -window.innerWidth / 2 + halfButton + 8
-
-    const maxY = window.innerHeight / 2 - halfButton - 8
-    const minY = -window.innerHeight / 2 + halfButton + 8
-
-    const nextX = Math.max(
-      minX,
-      Math.min(maxX, drag.startMicX + dx),
-    )
-
-    const nextY = Math.max(
-      minY,
-      Math.min(maxY, drag.startMicY + dy),
-    )
-
-    setMicPosition({
-      x: nextX,
-      y: nextY,
-    })
-  }
-
-  const finishDrag = (
-    event: React.PointerEvent<HTMLButtonElement>,
-  ) => {
-    if (
-      dragRef.current.pointerId !== event.pointerId
-    ) {
-      return
-    }
-
-    dragRef.current.active = false
-    setDragging(false)
-
-    window.setTimeout(() => {
-      dragRef.current.moved = false
-    }, 50)
-  }
+  const SpeechRecognition =
+    typeof window !== "undefined"
+      ? (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition
+      : null;
 
   useEffect(() => {
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+
+    recognition.onstart = () => {
+      setState("listening");
+    };
+
+    recognition.onresult = (event: any) => {
+      let text = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        text += event.results[i][0].transcript;
+      }
+
+      setTranscript(text);
+    };
+
+    recognition.onerror = () => {
+      setState("idle");
+    };
+
+    recognition.onend = () => {
+      setState((current) =>
+        current === "listening" ? "processing" : current
+      );
+
+      setTimeout(() => {
+        setState("idle");
+      }, 900);
+    };
+
+    recognitionRef.current = recognition;
+
     return () => {
       try {
-        recognitionRef.current?.stop()
+        recognition.stop();
       } catch {}
+    };
+  }, [SpeechRecognition]);
+
+  const startListening = () => {
+    if (!recognitionRef.current) {
+      setState("listening");
+
+      setTimeout(() => {
+        setState("idle");
+      }, 1500);
+
+      return;
     }
-  }, [])
+
+    setTranscript("");
+
+    try {
+      recognitionRef.current.start();
+    } catch {
+      try {
+        recognitionRef.current.stop();
+      } catch {}
+
+      setTimeout(() => {
+        try {
+          recognitionRef.current.start();
+        } catch {}
+      }, 200);
+    }
+  };
+
+  const stopListening = () => {
+    if (!recognitionRef.current) {
+      setState("processing");
+
+      setTimeout(() => {
+        setState("idle");
+      }, 700);
+
+      return;
+    }
+
+    try {
+      recognitionRef.current.stop();
+    } catch {}
+
+    setState("processing");
+  };
+
+  const handlePointerDown = (
+    event: React.PointerEvent<HTMLButtonElement>
+  ) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+
+    draggingRef.current = true;
+
+    dragStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+    };
+
+    positionStartRef.current = {
+      x: micPosition.x,
+      y: micPosition.y,
+    };
+
+    startListening();
+  };
+
+  const handlePointerMove = (
+    event: React.PointerEvent<HTMLButtonElement>
+  ) => {
+    if (!draggingRef.current) return;
+
+    const dx = event.clientX - dragStartRef.current.x;
+    const dy = event.clientY - dragStartRef.current.y;
+
+    setMicPosition({
+      x: positionStartRef.current.x + dx,
+      y: positionStartRef.current.y + dy,
+    });
+  };
+
+  const handlePointerUp = (
+    event: React.PointerEvent<HTMLButtonElement>
+  ) => {
+    draggingRef.current = false;
+
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {}
+
+    stopListening();
+  };
+
+  const resetPosition = () => {
+    setMicPosition({ x: 0, y: 0 });
+  };
+
+  const stateText = {
+    idle: "IDLE",
+    listening: "LISTENING",
+    processing: "THINKING",
+    speaking: "SPEAKING",
+  }[state];
+
+  const stateColor = {
+    idle: "#1683ff",
+    listening: "#00e5ff",
+    processing: "#a855f7",
+    speaking: "#22c55e",
+  }[state];
 
   return (
-    <main className={`noa state-${state}`}>
-      <section className="orbArea">
-        <div className={`orb ${state}`}>
-          <div className="outerRing ringOne" />
-          <div className="outerRing ringTwo" />
-          <div className="outerRing ringThree" />
-
-          <div className="particles">
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-          </div>
-
-          <div
-            className="waveform"
-            aria-label={`NOA ${stateLabel}`}
-          >
-            {bars.map((height, index) => (
-              <i
-                key={index}
-                style={{
-                  height: `${height}px`,
-                  animationDelay: `${index * 45}ms`,
-                }}
-              />
-            ))}
-          </div>
-
-          <div className="state">
-            {stateLabel}
-          </div>
-        </div>
-
-        <button
-          className={`mic ${state} ${
-            dragging ? 'dragging' : ''
-          }`}
-          style={{
-            transform: `translate(${micPosition.x}px, ${micPosition.y}px)`,
-          }}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={finishDrag}
-          onPointerCancel={finishDrag}
-          onClick={handleMicClick}
-          aria-label={
-            state === 'listening'
-              ? 'Stop listening'
-              : 'Start listening'
-          }
-        >
-          <span className="micGlow" />
-
-          <svg
-            viewBox="0 0 24 24"
-            width="34"
-            height="34"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <rect
-              x="8"
-              y="3"
-              width="8"
-              height="13"
-              rx="4"
-            />
-
-            <path d="M5 11a7 7 0 0 0 14 0" />
-
-            <path d="M12 18v3" />
-
-            <path d="M9 21h6" />
-          </svg>
-        </button>
-      </section>
-
-      <style jsx>{`
+    <main className="noaPage">
+      <style jsx global>{`
         * {
           box-sizing: border-box;
         }
 
-        .noa {
-          min-height: 100svh;
+        html,
+        body {
+          margin: 0;
+          padding: 0;
           width: 100%;
+          min-height: 100%;
+          background: #000;
+        }
+
+        body {
           overflow: hidden;
-          background:
-            radial-gradient(
-              circle at 50% 48%,
-              rgba(0, 56, 130, 0.13) 0%,
-              rgba(0, 18, 45, 0.07) 24%,
-              rgba(0, 0, 0, 0) 47%
-            ),
-            #000;
-
-          color: #168cff;
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          position: relative;
-
           font-family:
             Inter,
+            ui-sans-serif,
             system-ui,
             -apple-system,
             BlinkMacSystemFont,
-            'Segoe UI',
+            "Segoe UI",
             sans-serif;
         }
 
-        .orbArea {
-          width: 330px;
-          height: 430px;
+        button {
+          font: inherit;
+        }
 
+        .noaPage {
           position: relative;
+          width: 100vw;
+          height: 100vh;
+          min-height: 100svh;
+          overflow: hidden;
+          background:
+            radial-gradient(
+              circle at 50% 45%,
+              rgba(0, 67, 130, 0.16),
+              transparent 34%
+            ),
+            #000;
+          color: white;
+          user-select: none;
+          touch-action: none;
+        }
 
-          display: flex;
-          align-items: center;
-          justify-content: center;
+        .backgroundGlow {
+          position: absolute;
+          width: 75vw;
+          height: 75vw;
+          max-width: 700px;
+          max-height: 700px;
+          left: 50%;
+          top: 46%;
+          transform: translate(-50%, -50%);
+          border-radius: 50%;
+          background: rgba(0, 92, 255, 0.06);
+          filter: blur(80px);
+          pointer-events: none;
+        }
+
+        .orbArea {
+          position: absolute;
+          left: 50%;
+          top: 46%;
+          width: min(78vw, 620px);
+          aspect-ratio: 1;
+          transform: translate(-50%, -50%);
         }
 
         .orb {
-          width: 280px;
-          height: 280px;
-
-          position: relative;
-
-          border-radius: 50%;
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          transform: translateY(-8px);
-
-          transition:
-            filter 250ms ease,
-            transform 250ms ease;
-        }
-
-        .orb::before {
-          content: '';
-
           position: absolute;
-
-          inset: 5px;
-
+          inset: 0;
           border-radius: 50%;
-
-          background:
-            radial-gradient(
-              circle,
-              rgba(0, 8, 20, 0.98) 0%,
-              rgba(0, 3, 10, 0.98) 65%,
-              rgba(0, 25, 55, 0.35) 100%
-            );
-
-          box-shadow:
-            0 0 25px rgba(0, 100, 255, 0.12),
-            inset 0 0 40px rgba(0, 75, 180, 0.08);
-
-          z-index: 1;
-
           transition:
-            box-shadow 300ms ease,
-            background 300ms ease;
+            filter 0.35s ease,
+            transform 0.35s ease;
         }
 
-        /* LISTENING */
-
-        .orb.listening::before {
-          box-shadow:
-            0 0 45px rgba(0, 130, 255, 0.55),
-            inset 0 0 65px rgba(0, 100, 255, 0.25);
+        .orb.listening {
+          transform: scale(1.035);
         }
 
-        /* PROCESSING */
-
-        .orb.processing::before {
-          box-shadow:
-            0 0 50px rgba(155, 70, 255, 0.55),
-            inset 0 0 70px rgba(130, 50, 255, 0.24);
+        .orb.processing {
+          transform: scale(1.02);
         }
 
-        /* SPEAKING */
-
-        .orb.speaking::before {
-          box-shadow:
-            0 0 50px rgba(0, 255, 210, 0.5),
-            inset 0 0 65px rgba(0, 220, 190, 0.2);
+        .orb.speaking {
+          transform: scale(1.04);
         }
 
         .outerRing {
           position: absolute;
-
+          inset: 3%;
           border-radius: 50%;
-
-          pointer-events: none;
-
+          border: 2px solid ${stateColor};
+          box-shadow:
+            0 0 12px ${stateColor},
+            inset 0 0 20px rgba(0, 90, 255, 0.08);
           transition:
-            border-color 300ms ease,
-            box-shadow 300ms ease,
-            transform 400ms ease;
+            border-color 0.3s ease,
+            box-shadow 0.3s ease;
         }
 
         .ringOne {
-          inset: 0;
-
-          border: 1px solid rgba(28, 132, 255, 0.65);
-
-          box-shadow:
-            0 0 8px rgba(0, 110, 255, 0.35),
-            inset 0 0 8px rgba(0, 100, 255, 0.12);
+          animation: rotateRing 20s linear infinite;
         }
 
         .ringTwo {
-          inset: 10px;
-
-          border: 1px dotted rgba(36, 134, 255, 0.35);
-
-          transform: rotate(18deg);
+          inset: 10%;
+          border: 1px solid rgba(80, 160, 255, 0.18);
+          animation: rotateRingReverse 14s linear infinite;
         }
 
         .ringThree {
-          inset: 17px;
-
-          border: 1px solid rgba(33, 111, 220, 0.16);
-
-          border-left-color: rgba(40, 145, 255, 0.55);
-
-          border-bottom-color: rgba(40, 145, 255, 0.5);
-
-          transform: rotate(-32deg);
+          inset: 18%;
+          border: 1px solid rgba(0, 120, 255, 0.1);
         }
 
-        .listening .ringOne {
-          border-color: rgba(75, 175, 255, 0.95);
+        .dot {
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: ${stateColor};
+          box-shadow: 0 0 12px ${stateColor};
+          transition:
+            background 0.3s ease,
+            box-shadow 0.3s ease;
+        }
 
+        .dot:nth-child(1) {
+          left: 50%;
+          top: 3%;
+          transform: translateX(-50%);
+        }
+
+        .dot:nth-child(2) {
+          right: 9%;
+          top: 25%;
+        }
+
+        .dot:nth-child(3) {
+          right: 3%;
+          top: 50%;
+          transform: translateY(-50%);
+        }
+
+        .dot:nth-child(4) {
+          right: 9%;
+          bottom: 25%;
+        }
+
+        .dot:nth-child(5) {
+          left: 50%;
+          bottom: 3%;
+          transform: translateX(-50%);
+        }
+
+        .dot:nth-child(6) {
+          left: 9%;
+          bottom: 25%;
+        }
+
+        .dot:nth-child(7) {
+          left: 3%;
+          top: 50%;
+          transform: translateY(-50%);
+        }
+
+        .dot:nth-child(8) {
+          left: 9%;
+          top: 25%;
+        }
+
+        .core {
+          position: absolute;
+          inset: 25%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          background:
+            radial-gradient(
+              circle,
+              rgba(3, 22, 45, 0.95),
+              rgba(0, 5, 14, 0.95) 65%,
+              rgba(0, 0, 0, 0.8)
+            );
           box-shadow:
-            0 0 20px rgba(0, 140, 255, 0.85),
-            inset 0 0 15px rgba(0, 130, 255, 0.3);
-
-          animation: ringPulse 1.1s ease-in-out infinite;
+            0 0 50px rgba(0, 92, 255, 0.12),
+            inset 0 0 40px rgba(0, 110, 255, 0.08);
         }
 
-        .listening .ringTwo {
-          border-color: rgba(70, 160, 255, 0.65);
-
-          animation: rotateRing 5s linear infinite;
+        .waveform {
+          height: 90px;
+          width: 62%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 5px;
         }
 
-        .processing .ringOne {
-          border-color: rgba(190, 110, 255, 0.95);
+        .bar {
+          width: 5px;
+          min-height: 8px;
+          height: 18px;
+          border-radius: 20px;
+          background: ${stateColor};
+          box-shadow: 0 0 12px ${stateColor};
+          transition:
+            background 0.3s ease,
+            box-shadow 0.3s ease;
+          animation: wave 1.2s ease-in-out infinite;
+          animation-play-state: ${state === "idle" ? "paused" : "running"};
+        }
 
+        .bar:nth-child(1) {
+          animation-delay: -0.1s;
+        }
+
+        .bar:nth-child(2) {
+          animation-delay: -0.25s;
+        }
+
+        .bar:nth-child(3) {
+          animation-delay: -0.4s;
+        }
+
+        .bar:nth-child(4) {
+          animation-delay: -0.55s;
+        }
+
+        .bar:nth-child(5) {
+          animation-delay: -0.7s;
+        }
+
+        .bar:nth-child(6) {
+          animation-delay: -0.85s;
+        }
+
+        .bar:nth-child(7) {
+          animation-delay: -1s;
+        }
+
+        .bar:nth-child(8) {
+          animation-delay: -0.65s;
+        }
+
+        .bar:nth-child(9) {
+          animation-delay: -0.35s;
+        }
+
+        .bar:nth-child(10) {
+          animation-delay: -0.15s;
+        }
+
+        .stateText {
+          margin-top: -3px;
+          color: ${stateColor};
+          font-size: clamp(14px, 3vw, 20px);
+          letter-spacing: 8px;
+          font-weight: 500;
+          text-shadow: 0 0 15px ${stateColor};
+          transition:
+            color 0.3s ease,
+            text-shadow 0.3s ease;
+        }
+
+        .transcript {
+          position: absolute;
+          left: 50%;
+          bottom: 13%;
+          transform: translateX(-50%);
+          width: min(85vw, 600px);
+          min-height: 30px;
+          text-align: center;
+          color: rgba(190, 215, 255, 0.8);
+          font-size: 14px;
+          line-height: 1.5;
+          padding: 0 12px;
+          pointer-events: none;
+        }
+
+        .micButton {
+          position: absolute;
+          left: 50%;
+          bottom: 7%;
+          width: 116px;
+          height: 116px;
+          transform: translate(calc(-50% + ${micPosition.x}px), ${micPosition.y}px);
+          border-radius: 50%;
+          border: 3px solid ${stateColor};
+          background: rgba(0, 8, 20, 0.94);
+          color: ${stateColor};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: grab;
+          outline: none;
           box-shadow:
-            0 0 22px rgba(150, 60, 255, 0.8),
-            inset 0 0 15px rgba(150, 60, 255, 0.3);
-
-          animation: rotateRing 2.2s linear infinite;
+            0 0 12px ${stateColor},
+            0 0 35px rgba(0, 90, 255, 0.25),
+            inset 0 0 20px rgba(0, 100, 255, 0.08);
+          transition:
+            border-color 0.25s ease,
+            color 0.25s ease,
+            box-shadow 0.25s ease,
+            transform 0.1s linear;
+          z-index: 20;
         }
 
-        .processing .ringTwo {
-          border-color: rgba(170, 90, 255, 0.65);
-
-          animation: rotateRingReverse 3s linear infinite;
+        .micButton:active {
+          cursor: grabbing;
         }
 
-        .speaking .ringOne {
-          border-color: rgba(50, 255, 220, 0.95);
-
+        .micButton.listening {
           box-shadow:
-            0 0 22px rgba(0, 255, 210, 0.8),
-            inset 0 0 15px rgba(0, 255, 210, 0.3);
-
-          animation: ringPulse 0.9s ease-in-out infinite;
+            0 0 18px ${stateColor},
+            0 0 55px ${stateColor},
+            inset 0 0 30px rgba(0, 200, 255, 0.15);
         }
 
-        .speaking .ringTwo {
-          border-color: rgba(60, 240, 220, 0.65);
-
-          animation: rotateRing 4s linear infinite;
+        .micButton::before {
+          content: "";
+          position: absolute;
+          inset: -12px;
+          border-radius: 50%;
+          border: 1px solid ${stateColor};
+          opacity: 0.35;
+          animation: pulse 1.6s ease-out infinite;
         }
 
-        @keyframes ringPulse {
-          0%,
-          100% {
-            transform: scale(1);
-          }
+        .micButton::after {
+          content: "";
+          position: absolute;
+          inset: -25px;
+          border-radius: 50%;
+          border: 1px solid ${stateColor};
+          opacity: 0.12;
+          animation: pulse 1.6s ease-out infinite 0.5s;
+        }
 
-          50% {
-            transform: scale(1.025);
-          }
+        .micIcon {
+          position: relative;
+          z-index: 2;
+          width: 38px;
+          height: 48px;
+        }
+
+        .micBody {
+          position: absolute;
+          left: 50%;
+          top: 0;
+          width: 17px;
+          height: 30px;
+          transform: translateX(-50%);
+          border: 3px solid currentColor;
+          border-radius: 12px;
+        }
+
+        .micArc {
+          position: absolute;
+          left: 50%;
+          top: 17px;
+          width: 38px;
+          height: 30px;
+          transform: translateX(-50%);
+          border: 3px solid currentColor;
+          border-top: 0;
+          border-radius: 0 0 22px 22px;
+        }
+
+        .micStem {
+          position: absolute;
+          left: 50%;
+          top: 43px;
+          width: 3px;
+          height: 7px;
+          transform: translateX(-50%);
+          background: currentColor;
+          border-radius: 3px;
+        }
+
+        .micBase {
+          position: absolute;
+          left: 50%;
+          bottom: -1px;
+          width: 24px;
+          height: 3px;
+          transform: translateX(-50%);
+          background: currentColor;
+          border-radius: 3px;
+        }
+
+        .resetButton {
+          position: absolute;
+          top: 22px;
+          right: 22px;
+          z-index: 30;
+          padding: 8px 12px;
+          border: 1px solid rgba(80, 140, 220, 0.3);
+          border-radius: 10px;
+          background: rgba(0, 20, 40, 0.5);
+          color: rgba(180, 210, 255, 0.65);
+          font-size: 11px;
+          letter-spacing: 1px;
+          cursor: pointer;
+        }
+
+        .browserWarning {
+          position: absolute;
+          left: 50%;
+          top: 22px;
+          transform: translateX(-50%);
+          color: rgba(150, 180, 220, 0.55);
+          font-size: 10px;
+          letter-spacing: 1px;
+          text-align: center;
+          pointer-events: none;
         }
 
         @keyframes rotateRing {
@@ -525,443 +623,132 @@ export default function Page() {
           }
         }
 
-        .particles {
-          position: absolute;
-
-          inset: 0;
-
-          z-index: 3;
-        }
-
-        .particles span {
-          position: absolute;
-
-          width: 4px;
-          height: 4px;
-
-          border-radius: 50%;
-
-          background: #9ed4ff;
-
-          box-shadow: 0 0 8px #168cff;
-
-          opacity: 0.65;
-
-          transition:
-            background 300ms ease,
-            box-shadow 300ms ease;
-        }
-
-        .listening .particles span {
-          background: #8dd0ff;
-
-          box-shadow:
-            0 0 12px #168cff,
-            0 0 22px rgba(0, 140, 255, 0.8);
-
-          animation: particlePulse 0.8s ease-in-out infinite;
-        }
-
-        .processing .particles span {
-          background: #d2a5ff;
-
-          box-shadow:
-            0 0 12px #9a45ff,
-            0 0 22px rgba(150, 50, 255, 0.8);
-        }
-
-        .speaking .particles span {
-          background: #aaffee;
-
-          box-shadow:
-            0 0 12px #00e8c0,
-            0 0 22px rgba(0, 255, 210, 0.8);
-        }
-
-        @keyframes particlePulse {
-          0%,
-          100% {
-            opacity: 0.45;
-          }
-
-          50% {
-            opacity: 1;
-          }
-        }
-
-        .particles span:nth-child(1) {
-          top: 0;
-          left: 50%;
-        }
-
-        .particles span:nth-child(2) {
-          top: 35px;
-          right: 18px;
-        }
-
-        .particles span:nth-child(3) {
-          top: 50%;
-          right: -2px;
-        }
-
-        .particles span:nth-child(4) {
-          bottom: 35px;
-          right: 20px;
-        }
-
-        .particles span:nth-child(5) {
-          bottom: 0;
-          left: 50%;
-        }
-
-        .particles span:nth-child(6) {
-          bottom: 35px;
-          left: 20px;
-        }
-
-        .particles span:nth-child(7) {
-          top: 50%;
-          left: -2px;
-        }
-
-        .particles span:nth-child(8) {
-          top: 35px;
-          left: 20px;
-        }
-
-        .waveform {
-          position: relative;
-
-          z-index: 4;
-
-          width: 220px;
-          height: 70px;
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          gap: 4px;
-        }
-
-        .waveform i {
-          display: block;
-
-          width: 3px;
-
-          min-height: 5px;
-
-          border-radius: 3px;
-
-          background: linear-gradient(
-            to bottom,
-            #58b0ff,
-            #0879ed
-          );
-
-          box-shadow:
-            0 0 7px rgba(0, 126, 255, 0.75);
-
-          opacity: 0.9;
-
-          animation:
-            wave 1.8s ease-in-out infinite alternate;
-
-          transition:
-            background 300ms ease,
-            box-shadow 300ms ease;
-        }
-
-        .orb.listening .waveform i {
-          background: linear-gradient(
-            to bottom,
-            #a7ddff,
-            #0784ff
-          );
-
-          box-shadow:
-            0 0 10px rgba(0, 145, 255, 0.95);
-
-          animation-duration: 0.75s;
-        }
-
-        .orb.processing .waveform i {
-          background: linear-gradient(
-            to bottom,
-            #e0baff,
-            #933dff
-          );
-
-          box-shadow:
-            0 0 11px rgba(150, 60, 255, 0.95);
-
-          animation-duration: 0.55s;
-        }
-
-        .orb.speaking .waveform i {
-          background: linear-gradient(
-            to bottom,
-            #bafff2,
-            #00d9b5
-          );
-
-          box-shadow:
-            0 0 11px rgba(0, 255, 210, 0.9);
-
-          animation-duration: 0.5s;
-        }
-
         @keyframes wave {
+          0%,
+          100% {
+            height: 12px;
+          }
+
+          50% {
+            height: 55px;
+          }
+        }
+
+        @keyframes pulse {
           0% {
-            transform: scaleY(0.55);
-            opacity: 0.55;
+            transform: scale(0.9);
+            opacity: 0.35;
           }
 
-          50% {
-            transform: scaleY(1);
-            opacity: 1;
+          70% {
+            transform: scale(1.25);
+            opacity: 0;
           }
 
           100% {
-            transform: scaleY(0.65);
-            opacity: 0.7;
+            transform: scale(1.25);
+            opacity: 0;
           }
         }
 
-        .state {
-          position: absolute;
-
-          z-index: 5;
-
-          top: 174px;
-
-          left: 0;
-
-          width: 100%;
-
-          text-align: center;
-
-          font-size: 17px;
-
-          line-height: 1;
-
-          letter-spacing: 5px;
-
-          font-weight: 400;
-
-          color: #168cff;
-
-          text-shadow:
-            0 0 9px rgba(0, 126, 255, 0.65);
-
-          transition:
-            color 300ms ease,
-            text-shadow 300ms ease;
-        }
-
-        .state-listening .state {
-          color: #63b9ff;
-
-          text-shadow:
-            0 0 12px rgba(0, 150, 255, 0.95);
-        }
-
-        .state-processing .state {
-          color: #c58bff;
-
-          text-shadow:
-            0 0 12px rgba(155, 65, 255, 0.95);
-        }
-
-        .state-speaking .state {
-          color: #6dffe5;
-
-          text-shadow:
-            0 0 12px rgba(0, 255, 210, 0.95);
-        }
-
-        .mic {
-          position: absolute;
-
-          right: 18px;
-          bottom: 43px;
-
-          width: 92px;
-          height: 92px;
-
-          border-radius: 50%;
-
-          border: 3px solid #328eff;
-
-          background:
-            radial-gradient(
-              circle,
-              rgba(6, 20, 35, 0.98),
-              rgba(0, 0, 0, 0.96)
-            );
-
-          color: #bce3ff;
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          cursor: grab;
-
-          touch-action: none;
-
-          user-select: none;
-
-          -webkit-user-select: none;
-
-          box-shadow:
-            0 0 10px rgba(25, 130, 255, 0.4),
-            inset 0 0 14px rgba(0, 105, 255, 0.12);
-
-          transition:
-            box-shadow 180ms ease,
-            border-color 180ms ease,
-            color 180ms ease;
-        }
-
-        .mic.dragging {
-          cursor: grabbing;
-
-          transition: none;
-
-          transform-origin: center;
-        }
-
-        .mic.idle {
-          border-color: #328eff;
-
-          color: #bce3ff;
-        }
-
-        .mic.listening {
-          border-color: #ff4d61;
-
-          color: #ff9eaa;
-
-          box-shadow:
-            0 0 18px rgba(255, 45, 75, 0.75),
-            0 0 40px rgba(255, 45, 75, 0.28),
-            inset 0 0 22px rgba(255, 45, 75, 0.16);
-
-          animation: micListening 1s ease-in-out infinite;
-        }
-
-        .mic.processing {
-          border-color: #a34cff;
-
-          color: #d2a2ff;
-
-          box-shadow:
-            0 0 20px rgba(150, 60, 255, 0.8),
-            0 0 42px rgba(150, 60, 255, 0.25),
-            inset 0 0 22px rgba(150, 60, 255, 0.16);
-
-          animation: micProcessing 1.2s linear infinite;
-        }
-
-        .mic.speaking {
-          border-color: #00e8c0;
-
-          color: #9affed;
-
-          box-shadow:
-            0 0 20px rgba(0, 255, 210, 0.8),
-            0 0 42px rgba(0, 255, 210, 0.25),
-            inset 0 0 22px rgba(0, 255, 210, 0.16);
-
-          animation: micSpeaking 0.8s ease-in-out infinite;
-        }
-
-        @keyframes micListening {
-          0%,
-          100% {
-            box-shadow:
-              0 0 14px rgba(255, 45, 75, 0.65),
-              0 0 28px rgba(255, 45, 75, 0.2);
-          }
-
-          50% {
-            box-shadow:
-              0 0 28px rgba(255, 45, 75, 1),
-              0 0 55px rgba(255, 45, 75, 0.35);
-          }
-        }
-
-        @keyframes micProcessing {
-          from {
-            transform: rotate(0deg);
-          }
-
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        @keyframes micSpeaking {
-          0%,
-          100% {
-            transform: scale(1);
-          }
-
-          50% {
-            transform: scale(1.08);
-          }
-        }
-
-        .micGlow {
-          position: absolute;
-
-          inset: -5px;
-
-          border-radius: 50%;
-
-          pointer-events: none;
-
-          opacity: 0;
-
-          transition: opacity 200ms ease;
-        }
-
-        .mic.listening .micGlow {
-          opacity: 1;
-
-          box-shadow:
-            0 0 25px rgba(255, 50, 80, 0.35);
-        }
-
-        .mic.processing .micGlow {
-          opacity: 1;
-
-          box-shadow:
-            0 0 25px rgba(160, 60, 255, 0.35);
-        }
-
-        .mic.speaking .micGlow {
-          opacity: 1;
-
-          box-shadow:
-            0 0 25px rgba(0, 255, 210, 0.35);
-        }
-
-        @media (max-width: 480px) {
+        @media (max-width: 600px) {
           .orbArea {
-            width: 100vw;
-            height: 100svh;
+            width: 86vw;
+            top: 43%;
           }
 
-          .orb {
-            width: 280px;
-            height: 280px;
-
-            transform: translateY(-35px);
+          .micButton {
+            width: 92px;
+            height: 92px;
+            bottom: 8%;
           }
 
-          .mic {
-            right: calc(50% - 140px);
+          .micIcon {
+            transform: scale(0.82);
+          }
 
-            bot
+          .transcript {
+            bottom: 20%;
+            font-size: 12px;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .ringOne,
+          .ringTwo,
+          .bar,
+          .micButton::before,
+          .micButton::after {
+            animation: none !important;
+          }
+        }
+      `}</style>
+
+      <div className="backgroundGlow" />
+
+      <button className="resetButton" onClick={resetPosition}>
+        RESET MIC
+      </button>
+
+      <div className="browserWarning">
+        {SpeechRecognition ? "VOICE READY" : "VOICE API UNAVAILABLE"}
+      </div>
+
+      <section className="orbArea">
+        <div className={`orb ${state}`}>
+          <div className="outerRing ringOne" />
+          <div className="outerRing ringTwo" />
+          <div className="outerRing ringThree" />
+
+          <span className="dot" />
+          <span className="dot" />
+          <span className="dot" />
+          <span className="dot" />
+          <span className="dot" />
+          <span className="dot" />
+          <span className="dot" />
+          <span className="dot" />
+
+          <div className="core">
+            <div className="waveform">
+              <span className="bar" />
+              <span className="bar" />
+              <span className="bar" />
+              <span className="bar" />
+              <span className="bar" />
+              <span className="bar" />
+              <span className="bar" />
+              <span className="bar" />
+              <span className="bar" />
+              <span className="bar" />
+            </div>
+
+            <div className="stateText">{stateText}</div>
+          </div>
+        </div>
+      </section>
+
+      {transcript && (
+        <div className="transcript">
+          {transcript}
+        </div>
+      )}
+
+      <button
+        className={`micButton ${state}`}
+        aria-label="NOA microphone"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      >
+        <span className="micIcon">
+          <span className="micBody" />
+          <span className="micArc" />
+          <span className="micStem" />
+          <span className="micBase" />
+        </span>
+      </button>
+    </main>
+  );
+           }
