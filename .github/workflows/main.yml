@@ -34,6 +34,9 @@ jobs:
       - name: Build NOA
         run: npm run build
 
+      - name: Copy NOA engine into Pages output
+        run: cp noa-state-engine-48-1.html out/noa.html
+
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
 
