@@ -2,17 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
+<meta name="viewport"
+content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
+<meta name="theme-color" content="#000000">
 
 <title>NOA</title>
 
 <style>
 *{
   box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
 }
 
-html,
-body{
+html,body{
   margin:0;
   width:100%;
   height:100%;
@@ -26,83 +30,117 @@ body{
   touch-action:none;
 }
 
+button,
+input{
+  font-family:inherit;
+}
+
+/* =========================================================
+   APP
+========================================================= */
+
 #app{
   position:fixed;
   inset:0;
   display:flex;
   align-items:center;
   justify-content:center;
+  overflow:hidden;
 }
 
-/* ==================================================
+/* =========================================================
    ORB
-================================================== */
+========================================================= */
 
 #orb{
   position:relative;
+
   width:280px;
   height:280px;
-  transform-origin:center;
-  will-change:transform;
+
+  transform-origin:center center;
+
   user-select:none;
+  -webkit-user-select:none;
+
+  cursor:grab;
+
+  will-change:transform;
+}
+
+#orb:active{
+  cursor:grabbing;
 }
 
 #orbGlow{
   position:absolute;
-  inset:-55px;
+
+  inset:-65px;
+
   border-radius:50%;
 
   background:
     radial-gradient(
       circle,
-      rgba(30,110,255,.34),
-      rgba(20,80,220,.10) 42%,
+      rgba(30,110,255,.36),
+      rgba(20,80,220,.12) 42%,
       transparent 72%
     );
 
-  filter:blur(18px);
+  filter:blur(20px);
 
   animation:breathe 4.5s ease-in-out infinite;
+
+  pointer-events:none;
 }
 
 @keyframes breathe{
   0%,100%{
-    opacity:.7;
+    opacity:.68;
     transform:scale(1);
   }
 
   50%{
     opacity:1;
-    transform:scale(1.05);
+    transform:scale(1.06);
   }
 }
 
+/* =========================================================
+   SVG ORB
+========================================================= */
+
 #orb svg{
   position:absolute;
+
   inset:0;
+
   width:100%;
   height:100%;
+
   overflow:visible;
+
+  pointer-events:none;
 }
 
 .r1{
   animation:r1 22s linear infinite;
-  transform-origin:210px 210px;
+  transform-origin:140px 140px;
 }
 
 .r2{
   animation:r2 17s linear infinite;
-  transform-origin:210px 210px;
+  transform-origin:140px 140px;
 }
 
 .r3{
   animation:r3 13s linear infinite;
-  transform-origin:210px 210px;
+  transform-origin:140px 140px;
 }
 
 .r4{
   animation:r1 27s linear infinite;
-  transform-origin:210px 210px;
+  transform-origin:140px 140px;
 }
 
 @keyframes r1{
@@ -117,7 +155,7 @@ body{
   }
 
   to{
-    transform:rotate(0);
+    transform:rotate(0deg);
   }
 }
 
@@ -127,28 +165,37 @@ body{
   }
 }
 
-/* ==================================================
+/* =========================================================
    CENTER
-================================================== */
+========================================================= */
 
 #center{
   position:absolute;
+
   inset:0;
+
   z-index:5;
+
   pointer-events:none;
 }
 
+/* =========================================================
+   WAVE
+========================================================= */
+
 #wave{
   position:absolute;
+
   left:50%;
   top:50%;
 
   width:150px;
-  height:30px;
+  height:34px;
 
   transform:translate(-50%,-50%);
 
   display:flex;
+
   align-items:center;
   justify-content:center;
 
@@ -157,23 +204,27 @@ body{
 
 #wave i{
   display:block;
+
   width:2px;
 
-  border-radius:3px;
+  border-radius:4px;
 
   background:#4fa3ff;
 
   box-shadow:
-    0 0 7px rgba(79,163,255,.7);
+    0 0 6px rgba(79,163,255,.75),
+    0 0 12px rgba(79,163,255,.25);
 
   animation:
     wave 1s ease-in-out infinite alternate;
+
+  transform-origin:center;
 }
 
 @keyframes wave{
   from{
-    transform:scaleY(.28);
-    opacity:.38;
+    transform:scaleY(.25);
+    opacity:.32;
   }
 
   to{
@@ -182,27 +233,42 @@ body{
   }
 }
 
+/* =========================================================
+   STATE
+========================================================= */
+
 #state{
   position:absolute;
+
   left:50%;
   top:calc(50% + 27px);
 
   transform:translateX(-50%);
 
   font-size:10px;
+
   line-height:1;
 
   letter-spacing:3px;
 
   text-transform:uppercase;
 
+  white-space:nowrap;
+
+  color:#4fa3ff;
+
   text-shadow:
-    0 0 10px rgba(79,163,255,.75);
+    0 0 8px rgba(79,163,255,.75),
+    0 0 18px rgba(79,163,255,.25);
+
+  transition:
+    opacity .15s ease,
+    color .2s ease;
 }
 
-/* ==================================================
+/* =========================================================
    SPOKEN TEXT
-================================================== */
+========================================================= */
 
 #spokenText{
   position:absolute;
@@ -219,17 +285,16 @@ body{
   color:#4fa3ff;
 
   font-size:11px;
+
   line-height:1.45;
 
-  letter-spacing:.45px;
+  letter-spacing:.4px;
 
   text-shadow:
     0 0 7px rgba(79,163,255,.85),
     0 0 14px rgba(79,163,255,.45);
 
   opacity:0;
-
-  pointer-events:none;
 
   transition:opacity .15s ease;
 
@@ -244,18 +309,48 @@ body[data-state="speaking"] #spokenText{
   opacity:1;
 }
 
-body[data-state="idle"] #spokenText,
-body[data-state="listening"] #spokenText,
-body[data-state="thinking"] #spokenText,
-body[data-state="executing"] #spokenText,
-body[data-state="complete"] #spokenText,
-body[data-state="error"] #spokenText{
-  opacity:0;
+/* =========================================================
+   STATE ANIMATIONS
+========================================================= */
+
+body[data-state="thinking"] #orbGlow{
+  animation:breathe 1.6s ease-in-out infinite;
 }
 
-/* ==================================================
+body[data-state="listening"] #orbGlow{
+  animation:breathe 1.15s ease-in-out infinite;
+}
+
+body[data-state="executing"] #orbGlow{
+  animation:breathe .7s ease-in-out infinite;
+}
+
+body[data-state="speaking"] #wave i{
+  animation-duration:.42s;
+}
+
+body[data-state="listening"] #wave i{
+  animation-duration:.28s;
+}
+
+body[data-state="executing"] #wave i{
+  animation-duration:.22s;
+}
+
+body[data-state="complete"] #orbGlow{
+  animation:pulse .7s ease-out 1;
+}
+
+@keyframes pulse{
+  50%{
+    transform:scale(1.22);
+    opacity:1;
+  }
+}
+
+/* =========================================================
    MIC
-================================================== */
+========================================================= */
 
 #mic{
   position:fixed;
@@ -271,6 +366,7 @@ body[data-state="error"] #spokenText{
   z-index:30;
 
   display:flex;
+
   align-items:center;
   justify-content:center;
 
@@ -292,7 +388,13 @@ body[data-state="error"] #spokenText{
 
   cursor:grab;
 
-  -webkit-tap-highlight-color:transparent;
+  transition:
+    border-color .2s ease,
+    color .2s ease,
+    background .2s ease,
+    box-shadow .2s ease;
+
+  padding:0;
 }
 
 #mic.dragging{
@@ -307,27 +409,31 @@ body[data-state="error"] #spokenText{
   background:rgba(53,232,135,.16);
 
   box-shadow:
-    0 0 30px rgba(53,232,135,.42),
+    0 0 30px rgba(53,232,135,.48),
+    0 0 55px rgba(53,232,135,.16),
     inset 0 0 12px rgba(53,232,135,.12);
 }
 
-/* ==================================================
-   CHAT POPUP
-================================================== */
+/* =========================================================
+   CHAT OVERLAY
+========================================================= */
 
 #chatOverlay{
   position:fixed;
+
   inset:0;
 
   z-index:100;
 
   display:flex;
+
   align-items:center;
   justify-content:center;
 
   background:rgba(0,0,0,.58);
 
   backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
 
   opacity:0;
 
@@ -338,17 +444,25 @@ body[data-state="error"] #spokenText{
 
 #chatOverlay.open{
   opacity:1;
+
   pointer-events:auto;
 }
 
+/* =========================================================
+   CHAT BOX
+========================================================= */
+
 #chatBox{
   width:min(430px,92vw);
+
   height:min(650px,80vh);
 
   display:flex;
+
   flex-direction:column;
 
-  border:1px solid rgba(79,163,255,.45);
+  border:
+    1px solid rgba(79,163,255,.45);
 
   border-radius:20px;
 
@@ -360,7 +474,7 @@ body[data-state="error"] #spokenText{
     );
 
   box-shadow:
-    0 0 45px rgba(25,105,220,.25),
+    0 0 45px rgba(25,105,220,.22),
     inset 0 0 30px rgba(79,163,255,.035);
 
   overflow:hidden;
@@ -374,9 +488,9 @@ body[data-state="error"] #spokenText{
   transform:scale(1);
 }
 
-/* ==================================================
+/* =========================================================
    CHAT HEADER
-================================================== */
+========================================================= */
 
 #chatHeader{
   height:54px;
@@ -389,7 +503,8 @@ body[data-state="error"] #spokenText{
 
   justify-content:space-between;
 
-  padding:0 12px 0 18px;
+  padding:
+    0 12px 0 18px;
 
   border-bottom:
     1px solid rgba(120,180,255,.13);
@@ -415,11 +530,13 @@ body[data-state="error"] #spokenText{
   width:34px;
   height:34px;
 
-  border:1px solid rgba(79,163,255,.25);
+  border:
+    1px solid rgba(79,163,255,.25);
 
   border-radius:9px;
 
-  background:rgba(79,163,255,.07);
+  background:
+    rgba(79,163,255,.07);
 
   color:#9dccff;
 
@@ -427,17 +544,21 @@ body[data-state="error"] #spokenText{
 
   font-size:15px;
 
-  -webkit-tap-highlight-color:transparent;
+  padding:0;
+
+  font-weight:700;
 }
 
-/* ==================================================
+/* =========================================================
    CHAT HISTORY
-================================================== */
+========================================================= */
 
 #chatHistory{
   flex:1;
 
   overflow-y:auto;
+
+  overflow-x:hidden;
 
   padding:14px;
 
@@ -448,6 +569,10 @@ body[data-state="error"] #spokenText{
   gap:10px;
 
   scrollbar-width:thin;
+
+  scrollbar-color:
+    rgba(79,163,255,.35)
+    transparent;
 }
 
 .message{
@@ -471,9 +596,11 @@ body[data-state="error"] #spokenText{
 
   color:#dff0ff;
 
-  background:rgba(79,163,255,.12);
+  background:
+    rgba(79,163,255,.12);
 
-  border:1px solid rgba(79,163,255,.22);
+  border:
+    1px solid rgba(79,163,255,.22);
 
   border-bottom-right-radius:4px;
 }
@@ -483,9 +610,11 @@ body[data-state="error"] #spokenText{
 
   color:#dcecff;
 
-  background:rgba(8,18,35,.9);
+  background:
+    rgba(8,18,35,.9);
 
-  border:1px solid rgba(79,163,255,.17);
+  border:
+    1px solid rgba(79,163,255,.17);
 
   border-bottom-left-radius:4px;
 
@@ -509,54 +638,9 @@ body[data-state="error"] #spokenText{
   opacity:.7;
 }
 
-/* ==================================================
-   TYPING
-================================================== */
-
-.typing{
-  display:flex;
-
-  align-items:center;
-
-  gap:4px;
-
-  height:18px;
-}
-
-.typing span{
-  width:5px;
-  height:5px;
-
-  border-radius:50%;
-
-  background:#4fa3ff;
-
-  animation:typing 1s infinite ease-in-out;
-}
-
-.typing span:nth-child(2){
-  animation-delay:.15s;
-}
-
-.typing span:nth-child(3){
-  animation-delay:.3s;
-}
-
-@keyframes typing{
-  0%,60%,100%{
-    opacity:.25;
-    transform:translateY(0);
-  }
-
-  30%{
-    opacity:1;
-    transform:translateY(-3px);
-  }
-}
-
-/* ==================================================
+/* =========================================================
    CHAT INPUT
-================================================== */
+========================================================= */
 
 #chatInputArea{
   display:flex;
@@ -576,17 +660,20 @@ body[data-state="error"] #spokenText{
 
   height:42px;
 
-  border:1px solid rgba(79,163,255,.22);
+  border:
+    1px solid rgba(79,163,255,.22);
 
   border-radius:11px;
 
   outline:none;
 
-  background:rgba(79,163,255,.05);
+  background:
+    rgba(79,163,255,.05);
 
   color:#dcecff;
 
-  padding:0 12px;
+  padding:
+    0 12px;
 
   font-size:13px;
 }
@@ -597,28 +684,32 @@ body[data-state="error"] #spokenText{
 
 #sendChat{
   width:44px;
-
   height:42px;
 
-  border:1px solid rgba(79,163,255,.35);
+  border:
+    1px solid rgba(79,163,255,.35);
 
   border-radius:11px;
 
-  background:rgba(79,163,255,.10);
+  background:
+    rgba(79,163,255,.10);
 
   color:#8fc8ff;
 
   cursor:pointer;
 
   font-size:17px;
+
+  padding:0;
 }
 
-/* ==================================================
+/* =========================================================
    CHAT HINT
-================================================== */
+========================================================= */
 
 #chatHint{
-  padding:0 12px 9px;
+  padding:
+    0 12px 9px;
 
   color:#50708f;
 
@@ -627,49 +718,15 @@ body[data-state="error"] #spokenText{
   text-align:center;
 }
 
-/* ==================================================
-   STATE ANIMATIONS
-================================================== */
-
-body[data-state="thinking"] #orbGlow{
-  animation:
-    breathe 1.6s ease-in-out infinite;
-}
-
-body[data-state="executing"] #orbGlow{
-  animation:
-    breathe .75s ease-in-out infinite;
-}
-
-body[data-state="speaking"] #wave i{
-  animation-duration:.45s;
-}
-
-body[data-state="executing"] #wave i{
-  animation-duration:.3s;
-}
-
-body[data-state="complete"] #orbGlow{
-  animation:
-    pulse .7s ease-out 1;
-}
-
-@keyframes pulse{
-  50%{
-    transform:scale(1.2);
-    opacity:1;
-  }
-}
-
-/* ==================================================
+/* =========================================================
    MOBILE
-================================================== */
+========================================================= */
 
 @media(max-width:500px){
 
   #orb{
-    width:250px;
-    height:250px;
+    width:280px;
+    height:280px;
   }
 
   #mic{
@@ -679,13 +736,28 @@ body[data-state="complete"] #orbGlow{
 
   #spokenText{
     width:185px;
-    font-size:11px;
   }
 
   #chatBox{
     width:92vw;
-    height:80vh;
+    height:78vh;
     border-radius:18px;
+  }
+}
+
+/* =========================================================
+   SMALL HEIGHT DEVICES
+========================================================= */
+
+@media(max-height:700px){
+
+  #orb{
+    width:250px;
+    height:250px;
+  }
+
+  #mic{
+    bottom:18px;
   }
 }
 </style>
@@ -699,10 +771,7 @@ body[data-state="complete"] #orbGlow{
 
     <div id="orbGlow"></div>
 
-    <svg
-      viewBox="0 0 420 420"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 280 280" aria-hidden="true">
 
       <defs>
 
@@ -711,58 +780,47 @@ body[data-state="complete"] #orbGlow{
           x="-80%"
           y="-80%"
           width="260%"
-          height="260%"
-        >
+          height="260%">
 
           <feGaussianBlur
-            stdDeviation="6"
-            result="b"
-          />
+            stdDeviation="5"
+            result="blur"/>
 
           <feMerge>
-            <feMergeNode in="b"/>
+            <feMergeNode in="blur"/>
             <feMergeNode in="SourceGraphic"/>
           </feMerge>
 
         </filter>
 
         <filter id="soft">
-          <feGaussianBlur
-            stdDeviation="2"
-          />
+          <feGaussianBlur stdDeviation="2"/>
         </filter>
 
         <radialGradient id="core">
-
           <stop
             offset="0"
-            stop-color="#020409"
-          />
+            stop-color="#020409"/>
 
           <stop
             offset="1"
-            stop-color="#000"
-          />
-
+            stop-color="#000"/>
         </radialGradient>
 
         <linearGradient id="a">
 
           <stop
             stop-color="#bfe0ff"
-            stop-opacity="0"
-          />
+            stop-opacity="0"/>
 
           <stop
             offset=".5"
-            stop-color="#4fa3ff"
-          />
+            stop-color="#4fa3ff"/>
 
           <stop
             offset="1"
             stop-color="#bfe0ff"
-            stop-opacity="0"
-          />
+            stop-opacity="0"/>
 
         </linearGradient>
 
@@ -770,147 +828,155 @@ body[data-state="complete"] #orbGlow{
 
           <stop
             stop-color="#dff0ff"
-            stop-opacity="0"
-          />
+            stop-opacity="0"/>
 
           <stop
             offset=".5"
-            stop-color="#7cc4ff"
-          />
+            stop-color="#7cc4ff"/>
 
           <stop
             offset="1"
             stop-color="#dff0ff"
-            stop-opacity="0"
-          />
+            stop-opacity="0"/>
 
         </linearGradient>
 
       </defs>
 
+      <!-- CORE -->
+
       <circle
-        cx="210"
-        cy="210"
-        r="150"
-        fill="url(#core)"
-      />
+        cx="140"
+        cy="140"
+        r="110"
+        fill="url(#core)"/>
 
       <g filter="url(#glow)">
+
+        <!-- MAIN ROTATING ARC -->
 
         <g class="r1">
 
           <path
-            d="M210 65 C300 70 355 140 350 215 C345 290 280 350 205 350"
+            d="
+              M140 30
+              C210 35 258 88 252 153
+              C247 216 194 258 125 258
+            "
             fill="none"
             stroke="url(#a)"
-            stroke-width="2.6"
-            stroke-linecap="round"
-          />
+            stroke-width="2.4"
+            stroke-linecap="round"/>
 
         </g>
+
+        <!-- SECOND ARC -->
 
         <g class="r2">
 
           <path
-            d="M205 355 C120 352 65 285 68 210 C71 135 130 72 208 68"
+            d="
+              M125 263
+              C57 258 18 208 24 145
+              C30 84 78 38 145 34
+            "
             fill="none"
             stroke="url(#b)"
-            stroke-width="2.4"
-            stroke-linecap="round"
-          />
+            stroke-width="2.2"
+            stroke-linecap="round"/>
 
         </g>
+
+        <!-- DOT RING -->
 
         <g class="r3">
 
           <ellipse
-            cx="210"
-            cy="210"
-            rx="142"
-            ry="128"
+            cx="140"
+            cy="140"
+            rx="108"
+            ry="94"
             fill="none"
             stroke="#3d8fff"
             stroke-opacity=".55"
-            stroke-width="1.4"
-            stroke-dasharray="1 9"
-          />
+            stroke-width="1.2"
+            stroke-dasharray="1 8"/>
 
         </g>
+
+        <!-- VERTICAL RING -->
 
         <g class="r4">
 
           <ellipse
-            cx="210"
-            cy="210"
-            rx="128"
-            ry="144"
+            cx="140"
+            cy="140"
+            rx="94"
+            ry="108"
             fill="none"
             stroke="#8fd0ff"
-            stroke-opacity=".4"
-            stroke-width="1.1"
-            stroke-dasharray="1 7"
-          />
+            stroke-opacity=".42"
+            stroke-width="1"
+            stroke-dasharray="1 7"/>
 
         </g>
+
+        <!-- OUTER RING -->
 
         <g class="r2">
 
           <circle
-            cx="210"
-            cy="210"
-            r="150"
+            cx="140"
+            cy="140"
+            r="110"
             fill="none"
             stroke="#2f6fe0"
-            stroke-opacity=".5"
-          />
+            stroke-opacity=".55"
+            stroke-width="1"/>
 
         </g>
 
       </g>
 
+      <!-- LIGHT POINTS -->
+
       <g filter="url(#soft)">
 
         <circle
-          cx="210"
-          cy="61"
-          r="2"
-          fill="#eaf6ff"
-        />
-
-        <circle
-          cx="358"
-          cy="150"
-          r="1.6"
-          fill="#cfe8ff"
-        />
-
-        <circle
-          cx="360"
-          cy="270"
+          cx="140"
+          cy="30"
           r="1.8"
-          fill="#eaf6ff"
-        />
+          fill="#eaf6ff"/>
 
         <circle
-          cx="205"
-          cy="359"
-          r="2"
-          fill="#cfe8ff"
-        />
+          cx="249"
+          cy="94"
+          r="1.5"
+          fill="#cfe8ff"/>
 
         <circle
-          cx="62"
-          cy="255"
-          r="1.6"
-          fill="#eaf6ff"
-        />
+          cx="252"
+          cy="190"
+          r="1.7"
+          fill="#eaf6ff"/>
 
         <circle
-          cx="65"
-          cy="145"
+          cx="136"
+          cy="250"
           r="1.8"
-          fill="#cfe8ff"
-        />
+          fill="#cfe8ff"/>
+
+        <circle
+          cx="31"
+          cy="195"
+          r="1.5"
+          fill="#eaf6ff"/>
+
+        <circle
+          cx="30"
+          cy="90"
+          r="1.6"
+          fill="#cfe8ff"/>
 
       </g>
 
@@ -933,18 +999,24 @@ body[data-state="complete"] #orbGlow{
 </div>
 
 
+<!-- =======================================================
+     MIC
+======================================================== -->
+
 <button
   id="mic"
+  type="button"
   aria-label="Microphone"
-  aria-pressed="false"
->
+  aria-pressed="false">
+
   🎙
+
 </button>
 
 
-<!-- ==================================================
-     CHAT POPUP
-================================================== -->
+<!-- =======================================================
+     CHAT
+======================================================== -->
 
 <div id="chatOverlay">
 
@@ -961,31 +1033,32 @@ body[data-state="complete"] #orbGlow{
         <button
           class="chatAction"
           id="clearChat"
-          title="Clear history"
-        >
+          type="button"
+          title="Clear history">
+
           ⌫
+
         </button>
 
         <button
           class="chatAction"
           id="closeChat"
-          title="Close"
-        >
+          type="button"
+          title="Close">
+
           ×
+
         </button>
 
       </div>
 
     </div>
 
-
     <div id="chatHistory"></div>
-
 
     <div id="chatHint">
       Double-tap the orb to open chat
     </div>
-
 
     <div id="chatInputArea">
 
@@ -993,14 +1066,15 @@ body[data-state="complete"] #orbGlow{
         id="chatInput"
         type="text"
         autocomplete="off"
-        placeholder="Talk to NOA..."
-      />
+        placeholder="Talk to NOA...">
 
       <button
         id="sendChat"
-        aria-label="Send"
-      >
+        type="button"
+        aria-label="Send">
+
         ➤
+
       </button>
 
     </div>
@@ -1013,9 +1087,9 @@ body[data-state="complete"] #orbGlow{
 <script>
 "use strict";
 
-/* ==================================================
+/* =========================================================
    ELEMENTS
-================================================== */
+========================================================= */
 
 const body =
   document.body;
@@ -1054,23 +1128,31 @@ const clearChat =
   document.getElementById("clearChat");
 
 
-/* ==================================================
-   WORKER
-================================================== */
+/* =========================================================
+   CLOUDFLARE WORKER
+========================================================= */
 
 const NOA_WORKER =
   "https://noa-brain-a78d.ajaiacharya7274.workers.dev/api/chat";
 
 
-/* ==================================================
+/* =========================================================
    WAVEFORM
-================================================== */
+========================================================= */
 
-[
-  5,8,12,18,11,23,16,29,19,
-  24,14,9,6,10,16,22,15,20,
-  27,17,10,14,20,25,15,9,5
-].forEach(
+const WAVE_HEIGHTS = [
+
+  5,8,12,18,11,
+  23,16,29,19,
+  24,14,9,6,
+  10,16,22,15,
+  20,27,17,10,
+  14,20,25,15,
+  9,5
+
+];
+
+WAVE_HEIGHTS.forEach(
   (height,index)=>{
 
     const bar =
@@ -1088,9 +1170,9 @@ const NOA_WORKER =
 );
 
 
-/* ==================================================
-   STATE
-================================================== */
+/* =========================================================
+   STATE ENGINE
+========================================================= */
 
 function setState(value){
 
@@ -1103,24 +1185,36 @@ function setState(value){
 
   state.textContent =
     next;
+
 }
+
+
+function setSpokenText(text){
+
+  spokenText.textContent =
+    String(text || "");
+
+}
+
 
 window.NOA = {
 
   setState,
 
   getState(){
-
     return state.textContent;
+  },
 
+  ask(text){
+    askNOA(text);
   }
 
 };
 
 
-/* ==================================================
+/* =========================================================
    ORB ZOOM
-================================================== */
+========================================================= */
 
 let zoom = 1;
 
@@ -1133,6 +1227,7 @@ function applyOrbZoom(){
     "scale(" + zoom + ")";
 
 }
+
 
 orb.addEventListener(
   "wheel",
@@ -1163,12 +1258,14 @@ orb.addEventListener(
 );
 
 
-/* ==================================================
+/* =========================================================
    PINCH ZOOM
-================================================== */
+========================================================= */
 
 let pinchStartDistance = 0;
+
 let pinchStartZoom = 1;
+
 
 orb.addEventListener(
   "touchstart",
@@ -1198,6 +1295,7 @@ orb.addEventListener(
   }
 );
 
+
 orb.addEventListener(
   "touchmove",
   event=>{
@@ -1222,7 +1320,10 @@ orb.addEventListener(
 
     zoom =
       pinchStartZoom *
-      (distance / pinchStartDistance);
+      (
+        distance /
+        pinchStartDistance
+      );
 
     zoom =
       Math.max(
@@ -1241,145 +1342,11 @@ orb.addEventListener(
   }
 );
 
+
 orb.addEventListener(
   "touchend",
   ()=>{
     pinchStartDistance = 0;
   },
   {
-    passive:true
-  }
-);
-
-
-/* ==================================================
-   CHAT HISTORY
-================================================== */
-
-const STORAGE_KEY =
-  "NOA_CHAT_HISTORY_V2";
-
-let history = [];
-
-try{
-
-  const saved =
-    localStorage.getItem(
-      STORAGE_KEY
-    );
-
-  if(saved){
-
-    const parsed =
-      JSON.parse(saved);
-
-    if(Array.isArray(parsed)){
-      history = parsed;
-    }
-
-  }
-
-}catch(error){
-
-  console.warn(
-    "History load failed:",
-    error
-  );
-
-}
-
-
-function saveHistory(){
-
-  try{
-
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(history)
-    );
-
-  }catch(error){
-
-    console.warn(
-      "History save failed:",
-      error
-    );
-
-  }
-
-}
-
-
-function renderHistory(){
-
-  chatHistory.innerHTML = "";
-
-  history.forEach(
-    item=>{
-
-      const bubble =
-        document.createElement("div");
-
-      bubble.className =
-        "message " +
-        (
-          item.role === "user"
-            ? "user"
-            : "noa"
-        );
-
-      const label =
-        document.createElement("span");
-
-      label.className =
-        "messageLabel";
-
-      label.textContent =
-        item.role === "user"
-          ? "YOU"
-          : "NOA";
-
-      const content =
-        document.createElement("span");
-
-      content.textContent =
-        item.text;
-
-      bubble.appendChild(label);
-
-      bubble.appendChild(content);
-
-      chatHistory.appendChild(bubble);
-
-    }
-  );
-
-  requestAnimationFrame(
-    ()=>{
-      chatHistory.scrollTop =
-        chatHistory.scrollHeight;
-    }
-  );
-
-}
-
-
-function addHistory(
-  role,
-  text
-){
-
-  const value =
-    String(text || "").trim();
-
-  if(!value){
-    return;
-  }
-
-  history.push({
-
-    role:role,
-
-    text:value,
-
-    time:Date.
+    pas
