@@ -2,11 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport"
-      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#000000">
-
 <title>NOA</title>
 
 <style>
@@ -42,30 +39,25 @@ button,input{
   overflow:hidden;
 }
 
-/* ================================
+/* =========================
    ORB
-================================ */
+========================= */
 
 #orb{
   position:relative;
-  width:280px;
-  height:280px;
-  flex:0 0 280px;
-
-  transform:none !important;
+  width:225px;
+  height:225px;
+  flex:0 0 225px;
+  transform:none;
   transform-origin:center center;
-
   user-select:none;
   -webkit-user-select:none;
   will-change:auto;
-
-  cursor:default;
 }
 
 #orbGlow{
   position:absolute;
   inset:-55px;
-
   border-radius:50%;
 
   background:
@@ -77,9 +69,7 @@ button,input{
     );
 
   filter:blur(18px);
-
   animation:breathe 4.5s ease-in-out infinite;
-
   pointer-events:none;
 }
 
@@ -88,24 +78,21 @@ button,input{
     opacity:.68;
     transform:scale(1);
   }
-
   50%{
     opacity:1;
     transform:scale(1.05);
   }
 }
 
-/* ================================
+/* =========================
    SVG
-================================ */
+========================= */
 
 #orb svg{
   position:absolute;
   inset:0;
-
   width:100%;
   height:100%;
-
   overflow:visible;
   pointer-events:none;
 }
@@ -140,7 +127,6 @@ button,input{
   from{
     transform:rotate(360deg);
   }
-
   to{
     transform:rotate(0deg);
   }
@@ -152,9 +138,9 @@ button,input{
   }
 }
 
-/* ================================
+/* =========================
    CENTER
-================================ */
+========================= */
 
 #center{
   position:absolute;
@@ -165,19 +151,17 @@ button,input{
 
 #wave{
   position:absolute;
-
   left:50%;
   top:50%;
 
-  width:150px;
-  height:34px;
+  width:120px;
+  height:30px;
 
   transform:translate(-50%,-50%);
 
   display:flex;
   align-items:center;
   justify-content:center;
-
   gap:3px;
 
   opacity:0;
@@ -186,9 +170,7 @@ button,input{
 
 #wave i{
   display:block;
-
   width:2px;
-
   border-radius:4px;
 
   background:#4fa3ff;
@@ -197,9 +179,7 @@ button,input{
     0 0 6px rgba(79,163,255,.75),
     0 0 12px rgba(79,163,255,.25);
 
-  animation:
-    wave 1s ease-in-out infinite alternate;
-
+  animation:wave 1s ease-in-out infinite alternate;
   transform-origin:center;
 }
 
@@ -208,7 +188,6 @@ button,input{
     transform:scaleY(.25);
     opacity:.32;
   }
-
   to{
     transform:scaleY(1);
     opacity:1;
@@ -217,15 +196,13 @@ button,input{
 
 #state{
   position:absolute;
-
   left:50%;
-  top:calc(50% + 27px);
+  top:calc(50% + 23px);
 
   transform:translateX(-50%);
 
-  font-size:10px;
+  font-size:9px;
   line-height:1;
-
   letter-spacing:3px;
 
   text-transform:uppercase;
@@ -240,19 +217,18 @@ button,input{
 
 #spokenText{
   position:absolute;
-
   left:50%;
-  top:calc(50% + 48px);
+  top:calc(50% + 42px);
 
   transform:translateX(-50%);
 
-  width:205px;
+  width:185px;
 
   text-align:center;
 
   color:#4fa3ff;
 
-  font-size:11px;
+  font-size:10px;
   line-height:1.45;
   letter-spacing:.4px;
 
@@ -261,7 +237,6 @@ button,input{
     0 0 14px rgba(79,163,255,.45);
 
   opacity:0;
-
   transition:opacity .15s ease;
 
   z-index:10;
@@ -321,9 +296,9 @@ body[data-state="complete"] #orbGlow{
   }
 }
 
-/* ================================
+/* =========================
    MIC
-================================ */
+========================= */
 
 #mic{
   position:fixed;
@@ -335,7 +310,6 @@ body[data-state="complete"] #orbGlow{
   height:48px;
 
   border-radius:50%;
-
   z-index:30;
 
   display:flex;
@@ -345,7 +319,6 @@ body[data-state="complete"] #orbGlow{
   border:2px solid #4fa3ff;
 
   background:rgba(79,163,255,.12);
-
   color:#4fa3ff;
 
   box-shadow:
@@ -358,7 +331,6 @@ body[data-state="complete"] #orbGlow{
   touch-action:none;
 
   cursor:grab;
-
   padding:0;
 
   transition:
@@ -374,9 +346,7 @@ body[data-state="complete"] #orbGlow{
 
 #mic.on{
   border-color:#35e887;
-
   color:#35e887;
-
   background:rgba(53,232,135,.16);
 
   box-shadow:
@@ -385,9 +355,9 @@ body[data-state="complete"] #orbGlow{
     inset 0 0 12px rgba(53,232,135,.12);
 }
 
-/* ================================
+/* =========================
    CHAT
-================================ */
+========================= */
 
 #chatOverlay{
   position:fixed;
@@ -423,7 +393,6 @@ body[data-state="complete"] #orbGlow{
   flex-direction:column;
 
   border:1px solid rgba(79,163,255,.45);
-
   border-radius:20px;
 
   background:
@@ -440,7 +409,6 @@ body[data-state="complete"] #orbGlow{
   overflow:hidden;
 
   transform:scale(.94);
-
   transition:transform .2s ease;
 }
 
@@ -464,11 +432,8 @@ body[data-state="complete"] #orbGlow{
 
 #chatTitle{
   color:#7dbdff;
-
   font-size:11px;
-
   letter-spacing:3px;
-
   text-transform:uppercase;
 }
 
@@ -482,15 +447,12 @@ body[data-state="complete"] #orbGlow{
   height:34px;
 
   border:1px solid rgba(79,163,255,.25);
-
   border-radius:9px;
 
   background:rgba(79,163,255,.07);
-
   color:#9dccff;
 
   cursor:pointer;
-
   font-size:15px;
 
   padding:0;
@@ -506,7 +468,6 @@ body[data-state="complete"] #orbGlow{
 
   display:flex;
   flex-direction:column;
-
   gap:10px;
 
   scrollbar-width:thin;
@@ -565,7 +526,6 @@ body[data-state="complete"] #orbGlow{
   text-transform:uppercase;
 
   color:#6dafff;
-
   opacity:.7;
 }
 
@@ -581,7 +541,6 @@ body[data-state="complete"] #orbGlow{
 
 #chatInputArea{
   display:flex;
-
   gap:7px;
 
   padding:10px;
@@ -630,29 +589,24 @@ body[data-state="complete"] #orbGlow{
   cursor:pointer;
 
   font-size:17px;
-
   padding:0;
 }
 
-/* ================================
+/* =========================
    MOBILE
-================================ */
+========================= */
 
 @media(max-width:500px){
 
   #orb{
-    width:280px;
-    height:280px;
-    flex-basis:280px;
+    width:225px;
+    height:225px;
+    flex-basis:225px;
   }
 
   #mic{
     right:20px;
     bottom:20px;
-  }
-
-  #spokenText{
-    width:185px;
   }
 
   #chatBox{
@@ -662,19 +616,12 @@ body[data-state="complete"] #orbGlow{
   }
 }
 
-/*
-   IMPORTANT:
-   Do NOT shrink orb based on viewport height.
-   The old small-height rule was one reason
-   the visual reference kept changing.
-*/
-
 @media(max-height:600px){
 
   #orb{
-    width:250px;
-    height:250px;
-    flex-basis:250px;
+    width:225px;
+    height:225px;
+    flex-basis:225px;
   }
 }
 </style>
@@ -751,8 +698,6 @@ body[data-state="complete"] #orbGlow{
 
       </defs>
 
-      <!-- CORE -->
-
       <circle
         cx="140"
         cy="140"
@@ -760,8 +705,6 @@ body[data-state="complete"] #orbGlow{
         fill="url(#core)"/>
 
       <g filter="url(#glow)">
-
-        <!-- MAIN RING 1 -->
 
         <g class="r1">
 
@@ -772,15 +715,11 @@ body[data-state="complete"] #orbGlow{
               C240 220 190 260 130 260
             "
             fill="none"
-
             stroke="url(#a)"
-
             stroke-width="2"
-
             stroke-linecap="round"/>
-        </g>
 
-        <!-- MAIN RING 2 -->
+        </g>
 
         <g class="r2">
 
@@ -791,15 +730,11 @@ body[data-state="complete"] #orbGlow{
               C30 90 80 40 145 35
             "
             fill="none"
-
             stroke="url(#b)"
-
             stroke-width="1.8"
-
             stroke-linecap="round"/>
-        </g>
 
-        <!-- DOTTED HORIZONTAL -->
+        </g>
 
         <g class="r3">
 
@@ -808,19 +743,13 @@ body[data-state="complete"] #orbGlow{
             cy="140"
             rx="105"
             ry="90"
-
             fill="none"
-
             stroke="#3d8fff"
-
             stroke-opacity=".55"
-
             stroke-width="1.2"
-
             stroke-dasharray="1 6"/>
-        </g>
 
-        <!-- DOTTED VERTICAL -->
+        </g>
 
         <g class="r4">
 
@@ -829,35 +758,24 @@ body[data-state="complete"] #orbGlow{
             cy="140"
             rx="90"
             ry="105"
-
             fill="none"
-
             stroke="#8fd0ff"
-
             stroke-opacity=".4"
-
             stroke-width=".9"
-
             stroke-dasharray="1 7"/>
-        </g>
 
-        <!-- OUTER CIRCLE -->
+        </g>
 
         <circle
           cx="140"
           cy="140"
           r="110"
-
           fill="none"
-
           stroke="#2f6fe0"
-
           stroke-opacity=".55"
-
           stroke-width="1"/>
-      </g>
 
-      <!-- LIGHT POINTS -->
+      </g>
 
       <g filter="url(#soft)">
 
@@ -924,10 +842,6 @@ body[data-state="complete"] #orbGlow{
 </button>
 
 
-<!-- ================================
-     CHAT
-================================ -->
-
 <div id="chatOverlay">
 
   <div id="chatBox">
@@ -988,9 +902,9 @@ body[data-state="complete"] #orbGlow{
 <script>
 "use strict";
 
-/* =========================================================
+/* =========================
    ELEMENTS
-========================================================= */
+========================= */
 
 const body =
   document.body;
@@ -1029,17 +943,17 @@ const clearChat =
   document.getElementById("clearChat");
 
 
-/* =========================================================
+/* =========================
    WORKER
-========================================================= */
+========================= */
 
 const NOA_WORKER =
   "https://noa-brain-a78d.ajaiacharya7274.workers.dev/api/chat";
 
 
-/* =========================================================
+/* =========================
    STATE
-========================================================= */
+========================= */
 
 function setState(value){
 
@@ -1055,20 +969,17 @@ function setState(value){
 }
 
 window.NOA = {
-
   setState,
-
   getState(){
     return state.textContent;
   },
-
   ask
 };
 
 
-/* =========================================================
+/* =========================
    WAVEFORM
-========================================================= */
+========================= */
 
 [
   5,8,12,18,11,23,16,29,19,
@@ -1087,14 +998,13 @@ window.NOA = {
       (index * .04) + "s";
 
     wave.appendChild(bar);
-
   }
 );
 
 
-/* =========================================================
+/* =========================
    CHAT STORAGE
-========================================================= */
+========================= */
 
 const STORAGE_KEY =
   "NOA_CHAT_HISTORY_V1";
@@ -1143,7 +1053,6 @@ function saveHistory(){
       "History save failed",
       error
     );
-
   }
 }
 
@@ -1197,40 +1106,24 @@ function renderHistory(){
 function addHistory(role,text){
 
   history.push({
-
     role,
-
     text:String(text)
-
   });
 
   if(history.length > 100){
 
     history =
-      history.slice(
-        -100
-      );
-
+      history.slice(-100);
   }
 
   saveHistory();
-
   renderHistory();
 }
 
 
-function addMessage(role,text){
-
-  addHistory(
-    role,
-    text
-  );
-}
-
-
-/* =========================================================
-   CHAT OPEN / CLOSE
-========================================================= */
+/* =========================
+   CHAT OPEN/CLOSE
+========================= */
 
 function openChat(){
 
@@ -1250,7 +1143,6 @@ function openChat(){
 function closeChatPopup(){
 
   chatOverlay.classList.remove("open");
-
 }
 
 
@@ -1261,7 +1153,6 @@ closeChat.addEventListener(
     event.stopPropagation();
 
     closeChatPopup();
-
   }
 );
 
@@ -1271,11 +1162,8 @@ chatOverlay.addEventListener(
   event=>{
 
     if(event.target === chatOverlay){
-
       closeChatPopup();
-
     }
-
   }
 );
 
@@ -1301,19 +1189,16 @@ clearChat.addEventListener(
     history = [];
 
     saveHistory();
-
     renderHistory();
-
   }
 );
 
 
-/* =========================================================
+/* =========================
    DOUBLE TAP ORB
-========================================================= */
+========================= */
 
-let lastOrbTap =
-  0;
+let lastOrbTap = 0;
 
 orb.addEventListener(
   "click",
@@ -1323,37 +1208,27 @@ orb.addEventListener(
       Date.now();
 
     if(
-      now - lastOrbTap <
-      380
+      now - lastOrbTap < 380
     ){
 
       openChat();
-
     }
 
-    lastOrbTap =
-      now;
-
+    lastOrbTap = now;
   }
 );
 
 
-/* =========================================================
+/* =========================
    SPEECH RECOGNITION
-========================================================= */
+========================= */
 
 const SpeechRecognition =
   window.SpeechRecognition ||
   window.webkitSpeechRecognition;
 
-let recognition =
-  null;
-
-let listening =
-  false;
-
-let manualStop =
-  false;
+let recognition = null;
+let listening = false;
 
 
 function setMicVisual(on){
@@ -1367,7 +1242,6 @@ function setMicVisual(on){
     "aria-pressed",
     String(Boolean(on))
   );
-
 }
 
 
@@ -1399,26 +1273,18 @@ if(SpeechRecognition){
       setState(
         "LISTENING"
       );
-
     };
 
 
   recognition.onresult =
     event=>{
 
-      let finalText =
-        "";
-
-      let interimText =
-        "";
+      let finalText = "";
+      let interimText = "";
 
       for(
-        let i =
-          event.resultIndex;
-
-        i <
-        event.results.length;
-
+        let i = event.resultIndex;
+        i < event.results.length;
         i++
       ){
 
@@ -1437,9 +1303,7 @@ if(SpeechRecognition){
 
           interimText +=
             transcript;
-
         }
-
       }
 
       const visibleText =
@@ -1452,7 +1316,6 @@ if(SpeechRecognition){
 
         spokenText.textContent =
           visibleText;
-
       }
 
       if(finalText.trim()){
@@ -1468,9 +1331,7 @@ if(SpeechRecognition){
           "";
 
         ask(text);
-
       }
-
     };
 
 
@@ -1489,23 +1350,7 @@ if(SpeechRecognition){
       spokenText.textContent =
         "";
 
-      if(
-        event.error ===
-        "not-allowed"
-      ){
-
-        setState(
-          "IDLE"
-        );
-
-      }else{
-
-        setState(
-          "IDLE"
-        );
-
-      }
-
+      setState("IDLE");
     };
 
 
@@ -1521,12 +1366,8 @@ if(SpeechRecognition){
         "listening"
       ){
 
-        setState(
-          "IDLE"
-        );
-
+        setState("IDLE");
       }
-
     };
 
 }else{
@@ -1534,598 +1375,16 @@ if(SpeechRecognition){
   console.warn(
     "SpeechRecognition is not supported."
   );
-
 }
 
 
-/* =========================================================
-   MIC CLICK + DRAG
-========================================================= */
+/* =========================
+   MIC DRAG
+========================= */
 
-let micPointer =
-  null;
-
-let micMoved =
-  false;
+let micPointer = null;
+let micMoved = false;
 
 
 mic.addEventListener(
   "pointerdown",
-  event=>{
-
-    event.preventDefault();
-
-    mic.setPointerCapture(
-      event.pointerId
-    );
-
-    micPointer = {
-
-      id:event.pointerId,
-
-      startX:event.clientX,
-      startY:event.clientY,
-
-      lastX:event.clientX,
-      lastY:event.clientY,
-
-      right:
-        parseFloat(
-          getComputedStyle(
-            mic
-          ).right
-        ) || 28,
-
-      bottom:
-        parseFloat(
-          getComputedStyle(
-            mic
-          ).bottom
-        ) || 28
-
-    };
-
-    micMoved = false;
-
-  }
-);
-
-
-mic.addEventListener(
-  "pointermove",
-  event=>{
-
-    if(
-      !micPointer ||
-      event.pointerId !==
-      micPointer.id
-    ){
-      return;
-    }
-
-    const dx =
-      event.clientX -
-      micPointer.startX;
-
-    const dy =
-      event.clientY -
-      micPointer.startY;
-
-    if(
-      Math.hypot(dx,dy) >
-      8
-    ){
-
-      micMoved = true;
-
-      mic.classList.add(
-        "dragging"
-      );
-
-      const newRight =
-        Math.max(
-          8,
-          Math.min(
-            window.innerWidth -
-            mic.offsetWidth -
-            8,
-
-            micPointer.right -
-            dx
-          )
-        );
-
-      const newBottom =
-        Math.max(
-          8,
-          Math.min(
-            window.innerHeight -
-            mic.offsetHeight -
-            8,
-
-            micPointer.bottom -
-            dy
-          )
-        );
-
-      mic.style.right =
-        newRight + "px";
-
-      mic.style.bottom =
-        newBottom + "px";
-
-    }
-
-  }
-);
-
-
-mic.addEventListener(
-  "pointerup",
-  event=>{
-
-    if(
-      !micPointer ||
-      event.pointerId !==
-      micPointer.id
-    ){
-      return;
-    }
-
-    mic.releasePointerCapture(
-      event.pointerId
-    );
-
-    mic.classList.remove(
-      "dragging"
-    );
-
-    const wasMoved =
-      micMoved;
-
-    micPointer =
-      null;
-
-    micMoved =
-      false;
-
-    if(wasMoved){
-      return;
-    }
-
-    toggleListening();
-
-  }
-);
-
-
-mic.addEventListener(
-  "pointercancel",
-  ()=>{
-    micPointer =
-      null;
-
-    micMoved =
-      false;
-
-    mic.classList.remove(
-      "dragging"
-    );
-  }
-);
-
-
-/* =========================================================
-   MIC TOGGLE
-========================================================= */
-
-function toggleListening(){
-
-  if(!recognition){
-
-    alert(
-      "Speech recognition is not supported in this browser."
-    );
-
-    return;
-
-  }
-
-  if(listening){
-
-    manualStop = true;
-
-    try{
-      recognition.stop();
-    }catch(error){}
-
-    listening = false;
-
-    setMicVisual(false);
-
-    setState(
-      "IDLE"
-    );
-
-    return;
-
-  }
-
-  manualStop = false;
-
-  spokenText.textContent =
-    "";
-
-  try{
-
-    recognition.start();
-
-  }catch(error){
-
-    console.warn(
-      "Recognition start failed:",
-      error
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   CHAT REQUEST
-========================================================= */
-
-async function ask(text){
-
-  const message =
-    String(text || "")
-      .trim();
-
-  if(!message){
-    return;
-  }
-
-  addHistory(
-    "user",
-    message
-  );
-
-  setState(
-    "THINKING"
-  );
-
-  try{
-
-    const response =
-      await fetch(
-        NOA_WORKER,
-        {
-          method:"POST",
-
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-
-          body:JSON.stringify({
-
-            message:message,
-
-            history:
-              history.slice(
-                -20
-              ).map(
-                item=>({
-                  role:
-                    item.role === "user"
-                      ? "user"
-                      : "assistant",
-
-                  content:
-                    item.text
-                })
-              )
-
-          })
-        }
-      );
-
-    if(!response.ok){
-
-      throw new Error(
-        "HTTP " +
-        response.status
-      );
-
-    }
-
-    const data =
-      await response.json();
-
-    const reply =
-      extractReply(data);
-
-    if(!reply){
-
-      throw new Error(
-        "Empty NOA response"
-      );
-
-    }
-
-    addHistory(
-      "noa",
-      reply
-    );
-
-    speakReply(
-      reply
-    );
-
-  }catch(error){
-
-    console.error(
-      "NOA request failed:",
-      error
-    );
-
-    const fallback =
-      "NOA connection error. Please try again.";
-
-    addHistory(
-      "noa",
-      fallback
-    );
-
-    setState(
-      "IDLE"
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   RESPONSE PARSER
-========================================================= */
-
-function extractReply(data){
-
-  if(!data){
-    return "";
-  }
-
-  if(typeof data === "string"){
-    return data.trim();
-  }
-
-  const candidates = [
-
-    data.reply,
-
-    data.response,
-
-    data.message,
-
-    data.text,
-
-    data.content,
-
-    data.answer,
-
-    data.output,
-
-    data.result
-
-  ];
-
-  for(
-    const value of candidates
-  ){
-
-    if(
-      typeof value ===
-      "string" &&
-      value.trim()
-    ){
-
-      return value.trim();
-
-    }
-
-  }
-
-  if(
-    data.choices &&
-    Array.isArray(data.choices) &&
-    data.choices[0]
-  ){
-
-    const choice =
-      data.choices[0];
-
-    if(
-      choice.message &&
-      typeof choice.message.content ===
-      "string"
-    ){
-
-      return choice.message.content.trim();
-
-    }
-
-    if(
-      typeof choice.text ===
-      "string"
-    ){
-
-      return choice.text.trim();
-
-    }
-
-  }
-
-  return "";
-
-}
-
-
-/* =========================================================
-   SPEECH SYNTHESIS
-========================================================= */
-
-function speakReply(text){
-
-  if(
-    !("speechSynthesis" in window)
-  ){
-
-    setState(
-      "COMPLETE"
-    );
-
-    setTimeout(
-      ()=>{
-        setState("IDLE");
-      },
-      700
-    );
-
-    return;
-
-  }
-
-  speechSynthesis.cancel();
-
-  const utterance =
-    new SpeechSynthesisUtterance(
-      text
-    );
-
-  utterance.lang =
-    "en-IN";
-
-  utterance.rate =
-    .96;
-
-  utterance.pitch =
-    1;
-
-  utterance.volume =
-    1;
-
-  utterance.onstart =
-    ()=>{
-
-      setState(
-        "SPEAKING"
-      );
-
-      spokenText.textContent =
-        text;
-
-    };
-
-  utterance.onend =
-    ()=>{
-
-      spokenText.textContent =
-        "";
-
-      setState(
-        "COMPLETE"
-      );
-
-      setTimeout(
-        ()=>{
-          setState("IDLE");
-        },
-        650
-      );
-
-    };
-
-  utterance.onerror =
-    ()=>{
-
-      spokenText.textContent =
-        "";
-
-      setState(
-        "IDLE"
-      );
-
-    };
-
-  speechSynthesis.speak(
-    utterance
-  );
-
-}
-
-
-/* =========================================================
-   CHAT SEND
-========================================================= */
-
-async function sendCurrentMessage(){
-
-  const text =
-    chatInput.value.trim();
-
-  if(!text){
-    return;
-  }
-
-  chatInput.value =
-    "";
-
-  await ask(text);
-
-}
-
-
-sendChat.addEventListener(
-  "click",
-  sendCurrentMessage
-);
-
-
-chatInput.addEventListener(
-  "keydown",
-  event=>{
-
-    if(
-      event.key ===
-      "Enter"
-    ){
-
-      event.preventDefault();
-
-      sendCurrentMessage();
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   INITIAL
-========================================================= */
-
-renderHistory();
-
-setState(
-  "IDLE"
-);
-
-console.log(
-  "NOA loaded successfully"
-);
-</script>
-
-</body>
-</html>
