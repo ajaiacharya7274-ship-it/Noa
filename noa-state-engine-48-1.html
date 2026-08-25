@@ -1,17 +1,19 @@
 <!doctype html>
 <html lang="en">
 <head>
+
 <meta charset="utf-8">
 
 <meta name="viewport"
-      content="width=device-width,
-               initial-scale=1,
-               maximum-scale=1,
-               user-scalable=no">
+content="width=device-width,
+initial-scale=1,
+maximum-scale=1,
+user-scalable=no">
 
 <title>NOA</title>
 
 <style>
+
 *{
   box-sizing:border-box;
 }
@@ -36,35 +38,46 @@ input{
   font-family:inherit;
 }
 
+button{
+  -webkit-tap-highlight-color:transparent;
+}
+
+
+/* =====================================================
+   APP
+===================================================== */
+
 #app{
   position:fixed;
   inset:0;
+
   display:flex;
   align-items:center;
   justify-content:center;
 }
 
 
-/* =========================================================
+/* =====================================================
    ORB
-========================================================= */
+===================================================== */
 
 #orb{
   position:relative;
+
   width:280px;
   height:280px;
 
   transform-origin:center;
+
   will-change:transform;
 
   user-select:none;
   -webkit-user-select:none;
-
-  cursor:default;
 }
 
 #orbGlow{
   position:absolute;
+
   inset:-55px;
 
   border-radius:50%;
@@ -79,12 +92,14 @@ input{
 
   filter:blur(18px);
 
-  animation:breathe 4.5s ease-in-out infinite;
+  animation:
+    breathe 4.5s ease-in-out infinite;
 
   pointer-events:none;
 }
 
 @keyframes breathe{
+
   0%,100%{
     opacity:.7;
     transform:scale(1);
@@ -94,10 +109,13 @@ input{
     opacity:1;
     transform:scale(1.05);
   }
+
 }
+
 
 #orb svg{
   position:absolute;
+
   inset:0;
 
   width:100%;
@@ -108,55 +126,77 @@ input{
   pointer-events:none;
 }
 
+
+/* rotating rings */
+
 .r1{
-  animation:r1 22s linear infinite;
-  transform-origin:210px 210px;
+  animation:
+    r1 22s linear infinite;
+
+  transform-origin:
+    210px 210px;
 }
 
 .r2{
-  animation:r2 17s linear infinite;
-  transform-origin:210px 210px;
+  animation:
+    r2 17s linear infinite;
+
+  transform-origin:
+    210px 210px;
 }
 
 .r3{
-  animation:r3 13s linear infinite;
-  transform-origin:210px 210px;
+  animation:
+    r3 13s linear infinite;
+
+  transform-origin:
+    210px 210px;
 }
 
 .r4{
-  animation:r1 27s linear infinite;
-  transform-origin:210px 210px;
+  animation:
+    r1 27s linear infinite;
+
+  transform-origin:
+    210px 210px;
 }
 
 @keyframes r1{
+
   to{
     transform:rotate(360deg);
   }
+
 }
 
 @keyframes r2{
+
   from{
     transform:rotate(360deg);
   }
 
   to{
-    transform:rotate(0);
+    transform:rotate(0deg);
   }
+
 }
 
 @keyframes r3{
+
   to{
     transform:rotate(-360deg);
   }
+
 }
 
 
-/* =========================================================
+/* =====================================================
    CENTER
-========================================================= */
+===================================================== */
 
 #center{
   position:absolute;
+
   inset:0;
 
   z-index:5;
@@ -173,9 +213,11 @@ input{
   width:150px;
   height:30px;
 
-  transform:translate(-50%,-50%);
+  transform:
+    translate(-50%,-50%);
 
   display:flex;
+
   align-items:center;
   justify-content:center;
 
@@ -183,6 +225,7 @@ input{
 }
 
 #wave i{
+
   display:block;
 
   width:2px;
@@ -199,6 +242,7 @@ input{
 }
 
 @keyframes wave{
+
   from{
     transform:scaleY(.28);
     opacity:.38;
@@ -208,17 +252,22 @@ input{
     transform:scaleY(1);
     opacity:1;
   }
+
 }
 
+
 #state{
+
   position:absolute;
 
   left:50%;
   top:calc(50% + 27px);
 
-  transform:translateX(-50%);
+  transform:
+    translateX(-50%);
 
   font-size:10px;
+
   line-height:1;
 
   letter-spacing:3px;
@@ -232,17 +281,19 @@ input{
 }
 
 
-/* =========================================================
-   SPOKEN WORDS
-========================================================= */
+/* =====================================================
+   SPOKEN TEXT
+===================================================== */
 
 #spokenText{
+
   position:absolute;
 
   left:50%;
   top:calc(50% + 48px);
 
-  transform:translateX(-50%);
+  transform:
+    translateX(-50%);
 
   width:205px;
 
@@ -251,6 +302,7 @@ input{
   color:#4fa3ff;
 
   font-size:11px;
+
   line-height:1.45;
 
   letter-spacing:.45px;
@@ -263,10 +315,10 @@ input{
 
   pointer-events:none;
 
+  z-index:10;
+
   transition:
     opacity .15s ease;
-
-  z-index:10;
 }
 
 body[data-state="speaking"] #state{
@@ -277,20 +329,13 @@ body[data-state="speaking"] #spokenText{
   opacity:1;
 }
 
-body[data-state="idle"] #spokenText,
-body[data-state="listening"] #spokenText,
-body[data-state="thinking"] #spokenText,
-body[data-state="complete"] #spokenText,
-body[data-state="executing"] #spokenText{
-  opacity:0;
-}
 
-
-/* =========================================================
+/* =====================================================
    MIC
-========================================================= */
+===================================================== */
 
 #mic{
+
   position:fixed;
 
   right:28px;
@@ -301,13 +346,15 @@ body[data-state="executing"] #spokenText{
 
   border-radius:50%;
 
-  z-index:30;
+  z-index:50;
 
   display:flex;
+
   align-items:center;
   justify-content:center;
 
-  border:2px solid #4fa3ff;
+  border:
+    2px solid #4fa3ff;
 
   background:
     rgba(79,163,255,.12);
@@ -320,16 +367,13 @@ body[data-state="executing"] #spokenText{
 
   font-size:18px;
 
-  user-select:none;
-  -webkit-user-select:none;
-
-  touch-action:none;
+  padding:0;
 
   cursor:grab;
 
-  -webkit-tap-highlight-color:transparent;
+  user-select:none;
 
-  padding:0;
+  touch-action:none;
 }
 
 #mic.dragging{
@@ -337,6 +381,7 @@ body[data-state="executing"] #spokenText{
 }
 
 #mic.on{
+
   border-color:#35e887;
 
   color:#35e887;
@@ -350,25 +395,31 @@ body[data-state="executing"] #spokenText{
 }
 
 
-/* =========================================================
-   CHAT
-========================================================= */
+/* =====================================================
+   CHAT OVERLAY
+===================================================== */
 
 #chatOverlay{
+
   position:fixed;
+
   inset:0;
 
-  z-index:100;
+  z-index:200;
 
   display:flex;
+
   align-items:center;
   justify-content:center;
 
   background:
-    rgba(0,0,0,.55);
+    rgba(0,0,0,.58);
 
-  backdrop-filter:blur(5px);
-  -webkit-backdrop-filter:blur(5px);
+  backdrop-filter:
+    blur(6px);
+
+  -webkit-backdrop-filter:
+    blur(6px);
 
   opacity:0;
 
@@ -379,16 +430,28 @@ body[data-state="executing"] #spokenText{
 }
 
 #chatOverlay.open{
+
   opacity:1;
+
   pointer-events:auto;
 }
 
+
+/* =====================================================
+   CHAT BOX
+===================================================== */
+
 #chatBox{
-  width:min(420px,88vw);
-  height:min(620px,78vh);
+
+  width:min(420px,92vw);
+
+  height:min(650px,80vh);
 
   display:flex;
+
   flex-direction:column;
+
+  overflow:hidden;
 
   border:
     1px solid rgba(79,163,255,.45);
@@ -398,33 +461,42 @@ body[data-state="executing"] #spokenText{
   background:
     linear-gradient(
       180deg,
-      rgba(5,13,28,.97),
-      rgba(1,5,12,.97)
+      rgba(5,13,28,.98),
+      rgba(1,5,12,.98)
     );
 
   box-shadow:
-    0 0 45px rgba(25,105,220,.22),
+    0 0 45px rgba(25,105,220,.25),
     inset 0 0 30px rgba(79,163,255,.035);
 
-  overflow:hidden;
-
-  transform:scale(.94);
+  transform:
+    scale(.94);
 
   transition:
     transform .2s ease;
 }
 
 #chatOverlay.open #chatBox{
-  transform:scale(1);
+
+  transform:
+    scale(1);
 }
 
+
+/* =====================================================
+   CHAT HEADER
+===================================================== */
+
 #chatHeader{
+
   height:52px;
 
   flex-shrink:0;
 
   display:flex;
+
   align-items:center;
+
   justify-content:space-between;
 
   padding:
@@ -435,6 +507,7 @@ body[data-state="executing"] #spokenText{
 }
 
 #chatTitle{
+
   color:#7dbdff;
 
   font-size:11px;
@@ -445,11 +518,14 @@ body[data-state="executing"] #spokenText{
 }
 
 #chatActions{
+
   display:flex;
+
   gap:7px;
 }
 
 .chatAction{
+
   width:32px;
   height:32px;
 
@@ -470,11 +546,13 @@ body[data-state="executing"] #spokenText{
   padding:0;
 }
 
-.chatAction:active{
-  transform:scale(.94);
-}
+
+/* =====================================================
+   CHAT HISTORY
+===================================================== */
 
 #chatHistory{
+
   flex:1;
 
   overflow-y:auto;
@@ -482,6 +560,7 @@ body[data-state="executing"] #spokenText{
   padding:14px;
 
   display:flex;
+
   flex-direction:column;
 
   gap:10px;
@@ -490,9 +569,11 @@ body[data-state="executing"] #spokenText{
 }
 
 .message{
-  max-width:86%;
 
-  padding:10px 12px;
+  max-width:88%;
+
+  padding:
+    10px 12px;
 
   border-radius:13px;
 
@@ -506,6 +587,7 @@ body[data-state="executing"] #spokenText{
 }
 
 .message.user{
+
   align-self:flex-end;
 
   color:#dff0ff;
@@ -520,12 +602,13 @@ body[data-state="executing"] #spokenText{
 }
 
 .message.noa{
+
   align-self:flex-start;
 
   color:#dcecff;
 
   background:
-    rgba(8,18,35,.9);
+    rgba(8,18,35,.92);
 
   border:
     1px solid rgba(79,163,255,.17);
@@ -537,6 +620,7 @@ body[data-state="executing"] #spokenText{
 }
 
 .messageLabel{
+
   display:block;
 
   margin-bottom:4px;
@@ -553,11 +637,16 @@ body[data-state="executing"] #spokenText{
 }
 
 .typing{
-  opacity:.65;
-  font-style:italic;
+  opacity:.55;
 }
 
+
+/* =====================================================
+   CHAT INPUT
+===================================================== */
+
 #chatInputArea{
+
   display:flex;
 
   gap:7px;
@@ -569,6 +658,7 @@ body[data-state="executing"] #spokenText{
 }
 
 #chatInput{
+
   flex:1;
 
   min-width:0;
@@ -598,6 +688,7 @@ body[data-state="executing"] #spokenText{
 }
 
 #chatInput:focus{
+
   border-color:
     rgba(79,163,255,.55);
 
@@ -606,6 +697,7 @@ body[data-state="executing"] #spokenText{
 }
 
 #sendChat{
+
   width:44px;
   height:42px;
 
@@ -626,11 +718,12 @@ body[data-state="executing"] #spokenText{
   padding:0;
 }
 
-#sendChat:active{
-  transform:scale(.94);
+#sendChat:disabled{
+  opacity:.4;
 }
 
 #chatHint{
+
   padding:
     0 12px 9px;
 
@@ -642,92 +735,89 @@ body[data-state="executing"] #spokenText{
 }
 
 
-/* =========================================================
-   POPUP RESULT
-========================================================= */
+/* =====================================================
+   TEMP POPUP
+===================================================== */
 
 #popupLayer{
+
   position:fixed;
+
   inset:0;
 
-  z-index:80;
+  z-index:120;
 
   pointer-events:none;
 
   overflow:hidden;
 }
 
-.noa-popup{
+.noaPopup{
+
   position:absolute;
 
   left:50%;
   top:50%;
 
-  width:min(360px,78vw);
+  width:min(380px,82vw);
 
-  min-height:130px;
+  max-height:70vh;
 
   transform:
-    translate(-50%,-50%)
-    scale(.96);
+    translate(-50%,-50%);
 
   pointer-events:auto;
 
   border:
-    1px solid rgba(79,163,255,.42);
+    1px solid rgba(79,163,255,.5);
 
   border-radius:18px;
 
   background:
-    rgba(3,8,18,.95);
+    rgba(3,8,18,.96);
 
   box-shadow:
-    0 0 35px rgba(25,105,220,.18);
-
-  color:#dcecff;
+    0 0 40px rgba(25,105,220,.25);
 
   overflow:hidden;
-
-  opacity:0;
-
-  animation:
-    popupIn .18s ease forwards;
 }
 
-@keyframes popupIn{
-  to{
-    opacity:1;
-    transform:
-      translate(-50%,-50%)
-      scale(1);
-  }
-}
+.noaPopupHeader{
 
-.noa-popup-head{
-  height:42px;
+  height:44px;
 
   display:flex;
+
   align-items:center;
+
   justify-content:space-between;
 
   padding:
-    0 12px 0 16px;
+    0 10px 0 16px;
 
   border-bottom:
     1px solid rgba(120,180,255,.12);
+
+  cursor:grab;
 }
 
-.noa-popup-title{
+.noaPopupHeader.dragging{
+  cursor:grabbing;
+}
+
+.noaPopupTitle{
+
+  color:#7dbdff;
+
   font-size:10px;
 
   letter-spacing:2px;
 
   text-transform:uppercase;
-
-  color:#7dbdff;
 }
 
-.noa-popup-close{
+.noaPopupClose{
+
   width:30px;
   height:30px;
 
@@ -743,8 +833,11 @@ body[data-state="executing"] #spokenText{
   cursor:pointer;
 }
 
-.noa-popup-body{
+.noaPopupBody{
+
   padding:16px;
+
+  color:#dcecff;
 
   font-size:13px;
 
@@ -752,82 +845,92 @@ body[data-state="executing"] #spokenText{
 
   white-space:pre-wrap;
 
-  max-height:280px;
-
   overflow:auto;
 
-  user-select:text;
+  max-height:300px;
 }
 
 
-/* =========================================================
-   STATES
-========================================================= */
+/* =====================================================
+   STATE ANIMATION
+===================================================== */
 
 body[data-state="thinking"] #orbGlow{
+
   animation:
     breathe 1.6s ease-in-out infinite;
 }
 
 body[data-state="executing"] #orbGlow{
+
   animation:
     breathe .75s ease-in-out infinite;
 }
 
 body[data-state="speaking"] #wave i{
+
   animation-duration:.45s;
 }
 
 body[data-state="executing"] #wave i{
+
   animation-duration:.3s;
 }
 
 body[data-state="complete"] #orbGlow{
+
   animation:
     pulse .7s ease-out 1;
 }
 
 @keyframes pulse{
+
   50%{
     transform:scale(1.2);
     opacity:1;
   }
+
 }
 
 
-/* =========================================================
+/* =====================================================
    MOBILE
-========================================================= */
+===================================================== */
 
 @media(max-width:500px){
 
   #orb{
+
     width:250px;
     height:250px;
   }
 
   #mic{
+
     right:20px;
     bottom:20px;
   }
 
-  #spokenText{
-    width:185px;
-    font-size:11px;
-  }
-
   #chatBox{
+
     width:92vw;
-    height:78vh;
+    height:80vh;
+
     border-radius:18px;
   }
+
 }
+
 </style>
 </head>
 
 
 <body data-state="idle">
 
+
+<!-- =====================================================
+     ORB
+===================================================== -->
 
 <div id="app">
 
@@ -851,23 +954,31 @@ body[data-state="complete"] #orbGlow{
 
           <feGaussianBlur
             stdDeviation="6"
-            result="b"/>
+            result="blur"/>
 
           <feMerge>
-            <feMergeNode in="b"/>
-            <feMergeNode in="SourceGraphic"/>
+
+            <feMergeNode
+              in="blur"/>
+
+            <feMergeNode
+              in="SourceGraphic"/>
+
           </feMerge>
 
         </filter>
 
 
         <filter id="soft">
+
           <feGaussianBlur
             stdDeviation="2"/>
+
         </filter>
 
 
         <radialGradient id="core">
+
           <stop
             offset="0"
             stop-color="#020409"/>
@@ -875,6 +986,7 @@ body[data-state="complete"] #orbGlow{
           <stop
             offset="1"
             stop-color="#000"/>
+
         </radialGradient>
 
 
@@ -1064,6 +1176,10 @@ body[data-state="complete"] #orbGlow{
 </div>
 
 
+<!-- =====================================================
+     MIC
+===================================================== -->
+
 <button
   id="mic"
   aria-label="Microphone"
@@ -1074,9 +1190,9 @@ body[data-state="complete"] #orbGlow{
 </button>
 
 
-<!-- =======================================================
+<!-- =====================================================
      CHAT POPUP
-======================================================= -->
+===================================================== -->
 
 <div id="chatOverlay">
 
@@ -1092,8 +1208,8 @@ body[data-state="complete"] #orbGlow{
       <div id="chatActions">
 
         <button
-          class="chatAction"
           id="clearChat"
+          class="chatAction"
           title="Clear history">
 
           ⌫
@@ -1102,8 +1218,8 @@ body[data-state="complete"] #orbGlow{
 
 
         <button
-          class="chatAction"
           id="closeChat"
+          class="chatAction"
           title="Close">
 
           ×
@@ -1151,18 +1267,26 @@ body[data-state="complete"] #orbGlow{
 
 
 <script>
+
+/* =====================================================
+   NOA — SINGLE CORE
+===================================================== */
+
 "use strict";
 
 
-/* =========================================================
+/* =====================================================
    ELEMENTS
-========================================================= */
+===================================================== */
 
 const body =
   document.body;
 
 const orb =
   document.getElementById("orb");
+
+const orbGlow =
+  document.getElementById("orbGlow");
 
 const wave =
   document.getElementById("wave");
@@ -1198,48 +1322,24 @@ const popupLayer =
   document.getElementById("popupLayer");
 
 
-/* =========================================================
+/* =====================================================
    WORKER
-========================================================= */
+===================================================== */
 
 const NOA_WORKER =
   "https://noa-brain-a78d.ajaiacharya7274.workers.dev/api/chat";
 
 
-/* =========================================================
-   STATE
-========================================================= */
-
-function setState(value){
-
-  const next =
-    String(value || "IDLE")
-      .toUpperCase();
-
-  body.dataset.state =
-    next.toLowerCase();
-
-  state.textContent =
-    next;
-}
-
-
-function getState(){
-
-  return state.textContent;
-
-}
-
-
-/* =========================================================
+/* =====================================================
    WAVE
-========================================================= */
+===================================================== */
 
 [
   5,8,12,18,11,23,16,29,19,
   24,14,9,6,10,16,22,15,20,
   27,17,10,14,20,25,15,9,5
-].forEach(
+]
+.forEach(
   (height,index)=>{
 
     const bar =
@@ -1257,13 +1357,40 @@ function getState(){
 );
 
 
-/* =========================================================
-   ORB ZOOM
-========================================================= */
+/* =====================================================
+   STATE
+===================================================== */
+
+function setState(value){
+
+  const next =
+    String(value || "IDLE")
+      .toUpperCase();
+
+  body.dataset.state =
+    next.toLowerCase();
+
+  state.textContent =
+    next;
+
+}
+
+
+function getState(){
+
+  return state.textContent;
+
+}
+
+
+/* =====================================================
+   ZOOM
+===================================================== */
 
 let zoom = 1;
 
 const MIN_ZOOM = .55;
+
 const MAX_ZOOM = 2.4;
 
 
@@ -1298,27 +1425,32 @@ orb.addEventListener(
     applyOrbZoom();
 
   },
-  {passive:false}
+  {
+    passive:false
+  }
 );
 
 
-/* =========================================================
-   PINCH ZOOM
-========================================================= */
+/* =====================================================
+   PINCH
+===================================================== */
 
-let pinchStartDistance = 0;
-let pinchStartZoom = 1;
+let pinchDistance = 0;
+
+let pinchZoom = 1;
 
 
 orb.addEventListener(
   "touchstart",
   event=>{
 
-    if(event.touches.length !== 2){
+    if(
+      event.touches.length !== 2
+    ){
       return;
     }
 
-    pinchStartDistance =
+    pinchDistance =
       Math.hypot(
         event.touches[0].clientX -
         event.touches[1].clientX,
@@ -1327,11 +1459,13 @@ orb.addEventListener(
         event.touches[1].clientY
       );
 
-    pinchStartZoom =
+    pinchZoom =
       zoom;
 
   },
-  {passive:true}
+  {
+    passive:true
+  }
 );
 
 
@@ -1341,7 +1475,7 @@ orb.addEventListener(
 
     if(
       event.touches.length !== 2 ||
-      !pinchStartDistance
+      !pinchDistance
     ){
       return;
     }
@@ -1357,9 +1491,11 @@ orb.addEventListener(
         event.touches[1].clientY
       );
 
+
     zoom =
-      pinchStartZoom *
-      (distance / pinchStartDistance);
+      pinchZoom *
+      (distance / pinchDistance);
+
 
     zoom =
       Math.max(
@@ -1370,78 +1506,26 @@ orb.addEventListener(
         )
       );
 
+
     applyOrbZoom();
 
   },
-  {passive:false}
+  {
+    passive:false
+  }
 );
 
 
 orb.addEventListener(
   "touchend",
   ()=>{
-    pinchStartDistance = 0;
+    pinchDistance = 0;
   },
-  {passive:true}
+  {
+    passive:true
+  }
 );
 
 
-/* =========================================================
-   CHAT HISTORY
-========================================================= */
-
-const STORAGE_KEY =
-  "NOA_CHAT_HISTORY_V2";
-
-let history = [];
-
-
-try{
-
-  history =
-    JSON.parse(
-      localStorage.getItem(
-        STORAGE_KEY
-      ) || "[]"
-    );
-
-  if(!Array.isArray(history)){
-    history = [];
-  }
-
-}catch{
-
-  history = [];
-
-}
-
-
-function saveHistory(){
-
-  try{
-
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(history)
-    );
-
-  }catch(error){
-
-    console.warn(
-      "NOA history save failed",
-      error
-    );
-
-  }
-
-}
-
-
-function renderHistory(){
-
-  chatHistory.innerHTML = "";
-
-  history.forEach(
-    item=>{
-
-      const 
+/* =====================================================
+   CHAT H
