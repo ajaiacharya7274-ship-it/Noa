@@ -3,187 +3,2730 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
 <title>NOA</title>
+
 <style>
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}
-body{font-family:Inter,Arial,sans-serif;color:#4fa3ff;touch-action:none}
-#app{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
-#orb{position:relative;width:280px;height:280px;transform-origin:center;user-select:none;cursor:grab}
-#orbGlow{position:absolute;inset:-55px;border-radius:50%;background:radial-gradient(circle,rgba(30,110,255,.34),rgba(20,80,220,.10) 42%,transparent 72%);filter:blur(18px);animation:breathe 4.5s ease-in-out infinite}
-@keyframes breathe{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
-#orb svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.r1{animation:r1 22s linear infinite;transform-origin:140px 140px}
-.r2{animation:r2 17s linear infinite;transform-origin:140px 140px}
-.r3{animation:r3 13s linear infinite;transform-origin:140px 140px}
-.r4{animation:r1 27s linear infinite;transform-origin:140px 140px}
-@keyframes r1{to{transform:rotate(360deg)}}
-@keyframes r2{from{transform:rotate(360deg)}to{transform:rotate(0)}}
-@keyframes r3{to{transform:rotate(-360deg)}}
-#center{position:absolute;inset:0;z-index:5;pointer-events:none}
-#wave{position:absolute;left:50%;top:50%;width:150px;height:30px;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;gap:3px}
-#wave i{display:block;width:2px;border-radius:3px;background:#4fa3ff;box-shadow:0 0 7px rgba(79,163,255,.7);animation:wave 1s ease-in-out infinite alternate}
-@keyframes wave{from{transform:scaleY(.28);opacity:.38}to{transform:scaleY(1);opacity:1}}
-#state{position:absolute;left:50%;top:calc(50% + 27px);transform:translateX(-50%);font-size:10px;letter-spacing:3px;text-transform:uppercase;text-shadow:0 0 10px rgba(79,163,255,.75)}
-#mic{position:fixed;right:28px;bottom:28px;width:48px;height:48px;border-radius:50%;z-index:30;display:flex;align-items:center;justify-content:center;border:2px solid #4fa3ff;background:rgba(79,163,255,.12);color:#4fa3ff;font-size:18px;cursor:grab;touch-action:none;-webkit-tap-highlight-color:transparent;transition:all .2s}
-#mic:active{cursor:grabbing}
-#mic.on{border-color:#35e887;color:#35e887;background:rgba(53,232,135,.16);box-shadow:0 0 30px rgba(53,232,135,.42)}
-#chatOverlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.58);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .2s}
-#chatOverlay.open{opacity:1;pointer-events:auto}
-#chatBox{width:min(430px,92vw);height:min(650px,80vh);display:flex;flex-direction:column;border:1px solid rgba(79,163,255,.45);border-radius:20px;background:linear-gradient(180deg,rgba(5,13,28,.98),rgba(1,5,12,.98));overflow:hidden;transform:scale(.94);transition:transform .2s}
-#chatOverlay.open #chatBox{transform:scale(1)}
-#chatHeader{height:54px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 18px;border-bottom:1px solid rgba(120,180,255,.13)}
-#chatTitle{color:#7dbdff;font-size:11px;letter-spacing:3px;text-transform:uppercase}
-#chatActions{display:flex;gap:7px}
-.chatAction{width:34px;height:34px;border:1px solid rgba(79,163,255,.25);border-radius:9px;background:rgba(79,163,255,.07);color:#9dccff;cursor:pointer;font-size:15px;-webkit-tap-highlight-color:transparent;padding:0;font-weight:700}
-#chatHistory{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
-.message{max-width:88%;padding:10px 12px;border-radius:13px;font-size:13px;line-height:1.5;word-break:break-word}
-.message.user{align-self:flex-end;color:#dff0ff;background:rgba(79,163,255,.12);border:1px solid rgba(79,163,255,.22)}
-.message.noa{align-self:flex-start;color:#dcecff;background:rgba(8,18,35,.9);border:1px solid rgba(79,163,255,.17)}
-#chatInputArea{display:flex;gap:7px;padding:10px;border-top:1px solid rgba(120,180,255,.13)}
-#chatInput{flex:1;height:42px;border:1px solid rgba(79,163,255,.22);border-radius:11px;background:rgba(79,163,255,.05);color:#dcecff;padding:0 12px;font-size:13px;outline:0}
-#sendChat{width:44px;height:42px;border:1px solid rgba(79,163,255,.35);border-radius:11px;background:rgba(79,163,255,.10);color:#8fc8ff;cursor:pointer;font-size:17px;padding:0}
-</style>
-</head>
-<body>
-<div id="app">
-<div id="orb">
-<div id="orbGlow"></div>
-<svg viewBox="0 0 280 280"><defs><filter id="glow"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><radialGradient id="core"><stop offset="0" stop-color="#020409"/><stop offset="1" stop-color="#000"/></radialGradient><linearGradient id="a"><stop stop-color="#bfe0ff" stop-opacity="0"/><stop offset=".5" stop-color="#4fa3ff"/><stop offset="1" stop-color="#bfe0ff" stop-opacity="0"/></linearGradient><linearGradient id="b"><stop stop-color="#dff0ff" stop-opacity="0"/><stop offset=".5" stop-color="#7cc4ff"/><stop offset="1" stop-color="#dff0ff" stop-opacity="0"/></linearGradient></defs><circle cx="140" cy="140" r="110" fill="url(#core)"/><g filter="url(#glow)"><g class="r1"><path d="M140 45 C210 50 250 100 245 160 C240 220 190 260 130 260" fill="none" stroke="url(#a)" stroke-width="2" stroke-linecap="round"/></g><g class="r2"><path d="M130 265 C60 262 20 210 25 150 C30 90 80 40 145 35" fill="none" stroke="url(#b)" stroke-width="1.8" stroke-linecap="round"/></g><g class="r3"><ellipse cx="140" cy="140" rx="105" ry="90" fill="none" stroke="#3d8fff" stroke-opacity=".55" stroke-width="1.2"/></g><g class="r4"><ellipse cx="140" cy="140" rx="90" ry="105" fill="none" stroke="#8fd0ff" stroke-opacity=".4" stroke-width=".9"/></g></g></svg>
-<div id="center">
-<div id="wave"></div>
-<div id="state">IDLE</div>
-</div>
-</div>
-</div>
-<button id="mic">🎙</button>
-<div id="chatOverlay"><div id="chatBox"><div id="chatHeader"><div id="chatTitle">NOA // CHAT</div><div id="chatActions"><button class="chatAction" id="clearChat">⌫</button><button class="chatAction" id="closeChat">×</button></div></div><div id="chatHistory"></div><div id="chatInputArea"><input id="chatInput" type="text" placeholder="Talk to NOA..."/><button id="sendChat">➤</button></div></div></div>
-
-<script>
-const orb = document.getElementById('orb');
-const mic = document.getElementById('mic');
-const chatOverlay = document.getElementById('chatOverlay');
-const chatInput = document.getElementById('chatInput');
-const wave = document.getElementById('wave');
-const state = document.getElementById('state');
-
-let zoom = 1;
-const MIN_ZOOM = 0.5;
-const MAX_ZOOM = 2.5;
-
-// Waveform
-[5,8,12,18,11,23,16,29,19,24,14,9,6,10,16,22,15,20,27,17,10,14,20,25,15,9,5].forEach((h,i)=>{
-  const bar = document.createElement('i');
-  bar.style.height = h + 'px';
-  bar.style.animationDelay = (i * 0.04) + 's';
-  wave.appendChild(bar);
-});
-
-// Zoom - Wheel
-orb.addEventListener('wheel', (e) => {
-  e.preventDefault();
-  zoom += e.deltaY < 0 ? 0.1 : -0.1;
-  zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom));
-  orb.style.transform = 'scale(' + zoom + ')';
-}, {passive: false});
-
-// Zoom - Pinch
-let pinchStart = 0;
-let pinchZoom = 1;
-
-orb.addEventListener('touchstart', (e) => {
-  if(e.touches.length !== 2) return;
-  const dx = e.touches[0].clientX - e.touches[1].clientX;
-  const dy = e.touches[0].clientY - e.touches[1].clientY;
-  pinchStart = Math.hypot(dx, dy);
-  pinchZoom = zoom;
-});
-
-orb.addEventListener('touchmove', (e) => {
-  if(e.touches.length !== 2 || !pinchStart) return;
-  e.preventDefault();
-  const dx = e.touches[0].clientX - e.touches[1].clientX;
-  const dy = e.touches[0].clientY - e.touches[1].clientY;
-  const dist = Math.hypot(dx, dy);
-  zoom = pinchZoom * (dist / pinchStart);
-  zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom));
-  orb.style.transform = 'scale(' + zoom + ')';
-}, {passive: false});
-
-// Mic Drag
-let micStart = null;
-mic.addEventListener('pointerdown', (e) => {
-  micStart = {x: e.clientX, y: e.clientY};
-  mic.classList.add('on');
-});
-
-document.addEventListener('pointermove', (e) => {
-  if(!micStart) return;
-  const dx = e.clientX - micStart.x;
-  const dy = e.clientY - micStart.y;
-  if(Math.hypot(dx, dy) > 10) {
-    mic.style.position = 'fixed';
-    mic.style.right = (window.innerWidth - e.clientX) + 'px';
-    mic.style.bottom = (window.innerHeight - e.clientY) + 'px';
-  }
-});
-
-document.addEventListener('pointerup', () => {
-  micStart = null;
-  mic.classList.remove('on');
-});
-
-// Double tap orb
-let tapCount = 0;
-let lastTap = 0;
-orb.addEventListener('click', () => {
-  const now = Date.now();
-  if(now - lastTap < 300) {
-    tapCount++;
-    if(tapCount === 2) {
-      chatOverlay.classList.add('open');
-      chatInput.focus();
-      tapCount = 0;
-    }
-  } else {
-    tapCount = 1;
-  }
-  lastTap = now;
-});
-
-// Close chat
-document.getElementById('closeChat').addEventListener('click', () => {
-  chatOverlay.classList.remove('open');
-});
-
-// Clear chat
-document.getElementById('clearChat').addEventListener('click', () => {
-  document.getElementById('chatHistory').innerHTML = '';
-});
-
-// Send message
-document.getElementById('sendChat').addEventListener('click', () => {
-  const msg = chatInput.value.trim();
-  if(!msg) return;
-  addMessage('user', msg);
-  chatInput.value = '';
-});
-
-chatInput.addEventListener('keypress', (e) => {
-  if(e.key === 'Enter') {
-    document.getElementById('sendChat').click();
-  }
-});
-
-function addMessage(role, text) {
-  const bubble = document.createElement('div');
-  bubble.className = 'message ' + role;
-  bubble.textContent = text;
-  document.getElementById('chatHistory').appendChild(bubble);
-  document.getElementById('chatHistory').scrollTop = document.getElementById('chatHistory').scrollHeight;
+*{
+  box-sizing:border-box;
 }
 
-console.log('✅ All features loaded!');
+html,
+body{
+  margin:0;
+  width:100%;
+  height:100%;
+  background:#000;
+  overflow:hidden;
+}
+
+body{
+  font-family:Inter,Arial,sans-serif;
+  color:#4fa3ff;
+  touch-action:none;
+}
+
+#app{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* =========================
+   ORB
+========================= */
+
+#orb{
+  position:relative;
+  width:280px;
+  height:280px;
+  transform-origin:center;
+  user-select:none;
+  cursor:grab;
+  will-change:transform;
+}
+
+#orbGlow{
+  position:absolute;
+  inset:-55px;
+  border-radius:50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(30,110,255,.34),
+      rgba(20,80,220,.10) 42%,
+      transparent 72%
+    );
+
+  filter:blur(18px);
+
+  animation:breathe 4.5s ease-in-out infinite;
+}
+
+@keyframes breathe{
+  0%,100%{
+    opacity:.7;
+    transform:scale(1);
+  }
+
+  50%{
+    opacity:1;
+    transform:scale(1.05);
+  }
+}
+
+#orb svg{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  overflow:visible;
+}
+
+.r1{
+  animation:r1 22s linear infinite;
+  transform-origin:140px 140px;
+}
+
+.r2{
+  animation:r2 17s linear infinite;
+  transform-origin:140px 140px;
+}
+
+.r3{
+  animation:r3 13s linear infinite;
+  transform-origin:140px 140px;
+}
+
+.r4{
+  animation:r1 27s linear infinite;
+  transform-origin:140px 140px;
+}
+
+@keyframes r1{
+  to{
+    transform:rotate(360deg);
+  }
+}
+
+@keyframes r2{
+  from{
+    transform:rotate(360deg);
+  }
+
+  to{
+    transform:rotate(0deg);
+  }
+}
+
+@keyframes r3{
+  to{
+    transform:rotate(-360deg);
+  }
+}
+
+/* =========================
+   CENTER
+========================= */
+
+#center{
+  position:absolute;
+  inset:0;
+  z-index:5;
+  pointer-events:none;
+}
+
+#wave{
+  position:absolute;
+  left:50%;
+  top:50%;
+
+  width:150px;
+  height:30px;
+
+  transform:translate(-50%,-50%);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  gap:3px;
+}
+
+#wave i{
+  display:block;
+  width:2px;
+
+  border-radius:3px;
+
+  background:#4fa3ff;
+
+  box-shadow:
+    0 0 7px rgba(79,163,255,.7);
+
+  animation:
+    wave 1s ease-in-out infinite alternate;
+}
+
+@keyframes wave{
+  from{
+    transform:scaleY(.28);
+    opacity:.38;
+  }
+
+  to{
+    transform:scaleY(1);
+    opacity:1;
+  }
+}
+
+#state{
+  position:absolute;
+
+  left:50%;
+  top:calc(50% + 27px);
+
+  transform:translateX(-50%);
+
+  font-size:10px;
+  line-height:1;
+
+  letter-spacing:3px;
+
+  text-transform:uppercase;
+
+  text-shadow:
+    0 0 10px rgba(79,163,255,.75);
+
+  white-space:nowrap;
+}
+
+/* =========================
+   LIVE SPOKEN WORDS
+========================= */
+
+#spokenText{
+  position:absolute;
+
+  left:50%;
+  top:calc(50% + 48px);
+
+  transform:translateX(-50%);
+
+  width:205px;
+
+  text-align:center;
+
+  color:#4fa3ff;
+
+  font-size:11px;
+  line-height:1.45;
+
+  letter-spacing:.45px;
+
+  text-shadow:
+    0 0 7px rgba(79,163,255,.85),
+    0 0 14px rgba(79,163,255,.45);
+
+  opacity:0;
+
+  pointer-events:none;
+
+  z-index:10;
+}
+
+body[data-state="speaking"] #state{
+  opacity:0;
+}
+
+body[data-state="speaking"] #spokenText{
+  opacity:1;
+}
+
+/* =========================
+   MIC
+========================= */
+
+#mic{
+  position:fixed;
+
+  right:28px;
+  bottom:28px;
+
+  width:52px;
+  height:52px;
+
+  border-radius:50%;
+
+  z-index:30;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border:2px solid #4fa3ff;
+
+  background:rgba(79,163,255,.12);
+
+  color:#4fa3ff;
+
+  box-shadow:
+    0 0 22px rgba(79,163,255,.25),
+    inset 0 0 10px rgba(79,163,255,.08);
+
+  font-size:20px;
+
+  user-select:none;
+
+  touch-action:none;
+
+  cursor:grab;
+
+  -webkit-tap-highlight-color:transparent;
+
+  transition:
+    border-color .2s,
+    color .2s,
+    background .2s,
+    box-shadow .2s;
+}
+
+#mic.dragging{
+  cursor:grabbing;
+}
+
+#mic.on{
+  border-color:#35e887;
+
+  color:#35e887;
+
+  background:rgba(53,232,135,.16);
+
+  box-shadow:
+    0 0 30px rgba(53,232,135,.42),
+    inset 0 0 12px rgba(53,232,135,.12);
+}
+
+/* =========================
+   CHAT OVERLAY
+========================= */
+
+#chatOverlay{
+  position:fixed;
+
+  inset:0;
+
+  z-index:100;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  background:
+    rgba(0,0,0,.58);
+
+  backdrop-filter:blur(6px);
+
+  opacity:0;
+
+  pointer-events:none;
+
+  transition:opacity .2s ease;
+}
+
+#chatOverlay.open{
+  opacity:1;
+
+  pointer-events:auto;
+}
+
+#chatBox{
+  width:min(430px,92vw);
+
+  height:min(650px,80vh);
+
+  display:flex;
+
+  flex-direction:column;
+
+  border:
+    1px solid
+    rgba(79,163,255,.45);
+
+  border-radius:20px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(5,13,28,.98),
+      rgba(1,5,12,.98)
+    );
+
+  box-shadow:
+    0 0 45px
+    rgba(25,105,220,.22),
+
+    inset 0 0 30px
+    rgba(79,163,255,.035);
+
+  overflow:hidden;
+
+  transform:scale(.94);
+
+  transition:
+    transform .2s ease;
+}
+
+#chatOverlay.open #chatBox{
+  transform:scale(1);
+}
+
+/* =========================
+   CHAT HEADER
+========================= */
+
+#chatHeader{
+  height:54px;
+
+  flex-shrink:0;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  padding:
+    0 12px 0 18px;
+
+  border-bottom:
+    1px solid
+    rgba(120,180,255,.13);
+}
+
+#chatTitle{
+  color:#7dbdff;
+
+  font-size:11px;
+
+  letter-spacing:3px;
+
+  text-transform:uppercase;
+}
+
+#chatActions{
+  display:flex;
+
+  gap:7px;
+}
+
+.chatAction{
+  width:34px;
+  height:34px;
+
+  border:
+    1px solid
+    rgba(79,163,255,.25);
+
+  border-radius:9px;
+
+  background:
+    rgba(79,163,255,.07);
+
+  color:#9dccff;
+
+  cursor:pointer;
+
+  font-size:15px;
+
+  padding:0;
+
+  font-weight:700;
+
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* =========================
+   HISTORY
+========================= */
+
+#chatHistory{
+  flex:1;
+
+  overflow-y:auto;
+
+  padding:14px;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:10px;
+
+  scrollbar-width:thin;
+}
+
+.message{
+  max-width:88%;
+
+  padding:10px 12px;
+
+  border-radius:13px;
+
+  font-size:13px;
+
+  line-height:1.5;
+
+  white-space:pre-wrap;
+
+  word-break:break-word;
+}
+
+.message.user{
+  align-self:flex-end;
+
+  color:#dff0ff;
+
+  background:
+    rgba(79,163,255,.12);
+
+  border:
+    1px solid
+    rgba(79,163,255,.22);
+
+  border-bottom-right-radius:4px;
+}
+
+.message.noa{
+  align-self:flex-start;
+
+  color:#dcecff;
+
+  background:
+    rgba(8,18,35,.9);
+
+  border:
+    1px solid
+    rgba(79,163,255,.17);
+
+  border-bottom-left-radius:4px;
+
+  box-shadow:
+    0 0 15px
+    rgba(25,105,220,.08);
+}
+
+.messageLabel{
+  display:block;
+
+  margin-bottom:4px;
+
+  font-size:8px;
+
+  letter-spacing:2px;
+
+  text-transform:uppercase;
+
+  color:#6dafff;
+
+  opacity:.7;
+}
+
+/* =========================
+   TYPING
+========================= */
+
+.typing{
+  opacity:.7;
+}
+
+.typingDots{
+  display:inline-flex;
+
+  gap:3px;
+}
+
+.typingDots span{
+  width:4px;
+  height:4px;
+
+  border-radius:50%;
+
+  background:#4fa3ff;
+
+  animation:
+    typingDot .8s infinite alternate;
+}
+
+.typingDots span:nth-child(2){
+  animation-delay:.2s;
+}
+
+.typingDots span:nth-child(3){
+  animation-delay:.4s;
+}
+
+@keyframes typingDot{
+  from{
+    opacity:.25;
+    transform:translateY(0);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(-3px);
+  }
+}
+
+/* =========================
+   CHAT INPUT
+========================= */
+
+#chatInputArea{
+  display:flex;
+
+  gap:7px;
+
+  padding:10px;
+
+  border-top:
+    1px solid
+    rgba(120,180,255,.13);
+}
+
+#chatInput{
+  flex:1;
+
+  min-width:0;
+
+  height:42px;
+
+  border:
+    1px solid
+    rgba(79,163,255,.22);
+
+  border-radius:11px;
+
+  outline:none;
+
+  background:
+    rgba(79,163,255,.05);
+
+  color:#dcecff;
+
+  padding:
+    0 12px;
+
+  font-size:13px;
+}
+
+#chatInput::placeholder{
+  color:#6684a5;
+}
+
+#sendChat{
+  width:44px;
+
+  height:42px;
+
+  border:
+    1px solid
+    rgba(79,163,255,.35);
+
+  border-radius:11px;
+
+  background:
+    rgba(79,163,255,.10);
+
+  color:#8fc8ff;
+
+  cursor:pointer;
+
+  font-size:17px;
+
+  padding:0;
+}
+
+/* =========================
+   STATE ANIMATION
+========================= */
+
+body[data-state="thinking"] #orbGlow{
+  animation:
+    breathe 1.6s ease-in-out infinite;
+}
+
+body[data-state="executing"] #orbGlow{
+  animation:
+    breathe .75s ease-in-out infinite;
+}
+
+body[data-state="speaking"] #wave i{
+  animation-duration:.45s;
+}
+
+body[data-state="executing"] #wave i{
+  animation-duration:.3s;
+}
+
+body[data-state="listening"] #wave i{
+  animation-duration:.25s;
+}
+
+body[data-state="complete"] #orbGlow{
+  animation:
+    pulse .7s ease-out 1;
+}
+
+@keyframes pulse{
+  50%{
+    transform:scale(1.2);
+    opacity:1;
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:500px){
+
+  #orb{
+    width:280px;
+    height:280px;
+  }
+
+  #mic{
+    right:20px;
+    bottom:20px;
+  }
+
+  #spokenText{
+    width:185px;
+    font-size:11px;
+  }
+
+  #chatBox{
+    width:92vw;
+    height:78vh;
+
+    border-radius:18px;
+  }
+}
+</style>
+</head>
+
+<body data-state="idle">
+
+<div id="app">
+
+  <div id="orb">
+
+    <div id="orbGlow"></div>
+
+    <svg
+      viewBox="0 0 280 280"
+      aria-hidden="true"
+    >
+
+      <defs>
+
+        <filter id="glow">
+
+          <feGaussianBlur
+            stdDeviation="6"
+            result="b"
+          />
+
+          <feMerge>
+
+            <feMergeNode in="b"/>
+
+            <feMergeNode in="SourceGraphic"/>
+
+          </feMerge>
+
+        </filter>
+
+        <radialGradient id="core">
+
+          <stop
+            offset="0"
+            stop-color="#020409"
+          />
+
+          <stop
+            offset="1"
+            stop-color="#000"
+          />
+
+        </radialGradient>
+
+        <linearGradient id="a">
+
+          <stop
+            stop-color="#bfe0ff"
+            stop-opacity="0"
+          />
+
+          <stop
+            offset=".5"
+            stop-color="#4fa3ff"
+          />
+
+          <stop
+            offset="1"
+            stop-color="#bfe0ff"
+            stop-opacity="0"
+          />
+
+        </linearGradient>
+
+        <linearGradient id="b">
+
+          <stop
+            stop-color="#dff0ff"
+            stop-opacity="0"
+          />
+
+          <stop
+            offset=".5"
+            stop-color="#7cc4ff"
+          />
+
+          <stop
+            offset="1"
+            stop-color="#dff0ff"
+            stop-opacity="0"
+          />
+
+        </linearGradient>
+
+      </defs>
+
+      <circle
+        cx="140"
+        cy="140"
+        r="110"
+        fill="url(#core)"
+      />
+
+      <g filter="url(#glow)">
+
+        <g class="r1">
+
+          <path
+            d="M140 45 C210 50 250 100 245 160 C240 220 190 260 130 260"
+            fill="none"
+            stroke="url(#a)"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+
+        </g>
+
+        <g class="r2">
+
+          <path
+            d="M130 265 C60 262 20 210 25 150 C30 90 80 40 145 35"
+            fill="none"
+            stroke="url(#b)"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+
+        </g>
+
+        <g class="r3">
+
+          <ellipse
+            cx="140"
+            cy="140"
+            rx="105"
+            ry="90"
+            fill="none"
+            stroke="#3d8fff"
+            stroke-opacity=".55"
+            stroke-width="1.2"
+            stroke-dasharray="1 7"
+          />
+
+        </g>
+
+        <g class="r4">
+
+          <ellipse
+            cx="140"
+            cy="140"
+            rx="90"
+            ry="105"
+            fill="none"
+            stroke="#8fd0ff"
+            stroke-opacity=".4"
+            stroke-width=".9"
+            stroke-dasharray="1 6"
+          />
+
+        </g>
+
+        <circle
+          cx="140"
+          cy="140"
+          r="110"
+          fill="none"
+          stroke="#2f6fe0"
+          stroke-opacity=".5"
+        />
+
+      </g>
+
+      <g>
+
+        <circle
+          cx="140"
+          cy="30"
+          r="1.8"
+          fill="#eaf6ff"
+        />
+
+        <circle
+          cx="248"
+          cy="95"
+          r="1.5"
+          fill="#cfe8ff"
+        />
+
+        <circle
+          cx="250"
+          cy="190"
+          r="1.7"
+          fill="#eaf6ff"
+        />
+
+        <circle
+          cx="136"
+          cy="258"
+          r="1.8"
+          fill="#cfe8ff"
+        />
+
+        <circle
+          cx="35"
+          cy="180"
+          r="1.5"
+          fill="#eaf6ff"
+        />
+
+        <circle
+          cx="38"
+          cy="100"
+          r="1.7"
+          fill="#cfe8ff"
+        />
+
+      </g>
+
+    </svg>
+
+    <div id="center">
+
+      <div id="wave"></div>
+
+      <div id="state">
+        IDLE
+      </div>
+
+      <div id="spokenText"></div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<button
+  id="mic"
+  aria-label="Microphone"
+  aria-pressed="false"
+>
+  🎙
+</button>
+
+
+<!-- =========================
+     CHAT POPUP
+========================= -->
+
+<div id="chatOverlay">
+
+  <div id="chatBox">
+
+    <div id="chatHeader">
+
+      <div id="chatTitle">
+        NOA // CHAT
+      </div>
+
+      <div id="chatActions">
+
+        <button
+          class="chatAction"
+          id="clearChat"
+          title="Clear history"
+        >
+          ⌫
+        </button>
+
+        <button
+          class="chatAction"
+          id="closeChat"
+          title="Close"
+        >
+          ×
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <div id="chatHistory"></div>
+
+
+    <div id="chatInputArea">
+
+      <input
+        id="chatInput"
+        type="text"
+        autocomplete="off"
+        placeholder="Talk to NOA..."
+      />
+
+      <button
+        id="sendChat"
+        aria-label="Send"
+      >
+        ➤
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+"use strict";
+
+
+/* ==========================================
+   ELEMENTS
+========================================== */
+
+const body =
+  document.body;
+
+const orb =
+  document.getElementById("orb");
+
+const wave =
+  document.getElementById("wave");
+
+const state =
+  document.getElementById("state");
+
+const spokenText =
+  document.getElementById("spokenText");
+
+const mic =
+  document.getElementById("mic");
+
+const chatOverlay =
+  document.getElementById("chatOverlay");
+
+const chatHistory =
+  document.getElementById("chatHistory");
+
+const chatInput =
+  document.getElementById("chatInput");
+
+const sendChat =
+  document.getElementById("sendChat");
+
+const closeChat =
+  document.getElementById("closeChat");
+
+const clearChat =
+  document.getElementById("clearChat");
+
+
+/* ==========================================
+   EXISTING WORKER
+========================================== */
+
+const NOA_WORKER =
+  "https://noa-brain-a78d.ajaiacharya7274.workers.dev/api/chat";
+
+
+/* ==========================================
+   WAVEFORM
+========================================== */
+
+[
+  5,8,12,18,11,23,16,29,19,
+  24,14,9,6,10,16,22,15,20,
+  27,17,10,14,20,25,15,9,5
+].forEach(
+  (height,index)=>{
+
+    const bar =
+      document.createElement("i");
+
+    bar.style.height =
+      height + "px";
+
+    bar.style.animationDelay =
+      (index * .04) + "s";
+
+    wave.appendChild(bar);
+
+  }
+);
+
+
+/* ==========================================
+   STATE SYSTEM
+========================================== */
+
+function setState(value){
+
+  const next =
+    String(value || "IDLE")
+      .toUpperCase();
+
+  body.dataset.state =
+    next.toLowerCase();
+
+  state.textContent =
+    next;
+}
+
+window.NOA = {
+  setState:setState,
+
+  getState(){
+    return state.textContent;
+  }
+};
+
+
+/* ==========================================
+   ORB ZOOM
+========================================== */
+
+let zoom = 1;
+
+const MIN_ZOOM = .5;
+const MAX_ZOOM = 2.5;
+
+function applyOrbZoom(){
+
+  orb.style.transform =
+    "scale(" + zoom + ")";
+
+}
+
+orb.addEventListener(
+  "wheel",
+  event=>{
+
+    event.preventDefault();
+
+    zoom +=
+      event.deltaY < 0
+        ? .1
+        : -.1;
+
+    zoom =
+      Math.max(
+        MIN_ZOOM,
+        Math.min(
+          MAX_ZOOM,
+          zoom
+        )
+      );
+
+    applyOrbZoom();
+
+  },
+  {
+    passive:false
+  }
+);
+
+
+/* ==========================================
+   PINCH ZOOM
+========================================== */
+
+let pinchStart =
+  0;
+
+let pinchZoom =
+  1;
+
+orb.addEventListener(
+  "touchstart",
+  event=>{
+
+    if(
+      event.touches.length !== 2
+    ){
+      return;
+    }
+
+    const dx =
+      event.touches[0].clientX -
+      event.touches[1].clientX;
+
+    const dy =
+      event.touches[0].clientY -
+      event.touches[1].clientY;
+
+    pinchStart =
+      Math.hypot(
+        dx,
+        dy
+      );
+
+    pinchZoom =
+      zoom;
+
+  },
+  {
+    passive:true
+  }
+);
+
+orb.addEventListener(
+  "touchmove",
+  event=>{
+
+    if(
+      event.touches.length !== 2 ||
+      !pinchStart
+    ){
+      return;
+    }
+
+    event.preventDefault();
+
+    const dx =
+      event.touches[0].clientX -
+      event.touches[1].clientX;
+
+    const dy =
+      event.touches[0].clientY -
+      event.touches[1].clientY;
+
+    const distance =
+      Math.hypot(
+        dx,
+        dy
+      );
+
+    zoom =
+      pinchZoom *
+      (distance / pinchStart);
+
+    zoom =
+      Math.max(
+        MIN_ZOOM,
+        Math.min(
+          MAX_ZOOM,
+          zoom
+        )
+      );
+
+    applyOrbZoom();
+
+  },
+  {
+    passive:false
+  }
+);
+
+orb.addEventListener(
+  "touchend",
+  ()=>{
+    pinchStart = 0;
+  },
+  {
+    passive:true
+  }
+);
+
+
+/* ==========================================
+   CHAT HISTORY
+========================================== */
+
+const STORAGE_KEY =
+  "NOA_CHAT_HISTORY_V2";
+
+let history = [];
+
+try{
+
+  const saved =
+    localStorage.getItem(
+      STORAGE_KEY
+    );
+
+  if(saved){
+
+    const parsed =
+      JSON.parse(saved);
+
+    if(Array.isArray(parsed)){
+      history = parsed;
+    }
+
+  }
+
+}catch(error){
+
+  console.warn(
+    "History load failed",
+    error
+  );
+
+}
+
+
+function saveHistory(){
+
+  try{
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(history)
+    );
+
+  }catch(error){
+
+    console.warn(
+      "History save failed",
+      error
+    );
+
+  }
+
+}
+
+
+function renderHistory(){
+
+  chatHistory.innerHTML =
+    "";
+
+  history.forEach(
+    item=>{
+
+      createMessageBubble(
+        item.role,
+        item.text,
+        false
+      );
+
+    }
+  );
+
+  scrollChatBottom();
+
+}
+
+
+function scrollChatBottom(){
+
+  requestAnimationFrame(
+    ()=>{
+
+      chatHistory.scrollTop =
+        chatHistory.scrollHeight;
+
+    }
+  );
+
+}
+
+
+function createMessageBubble(
+  role,
+  text,
+  save
+){
+
+  const bubble =
+    document.createElement(
+      "div"
+    );
+
+  bubble.className =
+    "message " +
+    (
+      role === "user"
+        ? "user"
+        : "noa"
+    );
+
+
+  const label =
+    document.createElement(
+      "span"
+    );
+
+  label.className =
+    "messageLabel";
+
+  label.textContent =
+    role === "user"
+      ? "YOU"
+      : "NOA";
+
+
+  const content =
+    document.createElement(
+      "span"
+    );
+
+  content.textContent =
+    String(text);
+
+
+  bubble.appendChild(label);
+
+  bubble.appendChild(content);
+
+  chatHistory.appendChild(
+    bubble
+  );
+
+
+  if(save){
+
+    history.push({
+      role:role,
+      text:String(text)
+    });
+
+    if(history.length > 100){
+
+      history =
+        history.slice(
+          history.length - 100
+        );
+
+    }
+
+    saveHistory();
+
+  }
+
+  scrollChatBottom();
+
+  return bubble;
+}
+
+
+function addMessage(
+  role,
+  text
+){
+
+  return createMessageBubble(
+    role,
+    text,
+    true
+  );
+
+}
+
+
+/* ==========================================
+   CHAT OPEN / CLOSE
+========================================== */
+
+function openChat(){
+
+  chatOverlay.classList.add(
+    "open"
+  );
+
+  renderHistory();
+
+  setTimeout(
+    ()=>{
+      chatInput.focus();
+    },
+    120
+  );
+
+}
+
+
+function closeChatPopup(){
+
+  chatOverlay.classList.remove(
+    "open"
+  );
+
+}
+
+
+closeChat.addEventListener(
+  "click",
+  event=>{
+
+    event.stopPropagation();
+
+    closeChatPopup();
+
+  }
+);
+
+
+chatOverlay.addEventListener(
+  "click",
+  event=>{
+
+    if(
+      event.target ===
+      chatOverlay
+    ){
+
+      closeChatPopup();
+
+    }
+
+  }
+);
+
+
+clearChat.addEventListener(
+  "click",
+  event=>{
+
+    event.stopPropagation();
+
+    if(!history.length){
+      return;
+    }
+
+    history = [];
+
+    saveHistory();
+
+    renderHistory();
+
+  }
+);
+
+
+/* ==========================================
+   DOUBLE TAP ORB
+========================================== */
+
+let lastTapTime =
+  0;
+
+orb.addEventListener(
+  "click",
+  event=>{
+
+    const now =
+      Date.now();
+
+    if(
+      now - lastTapTime <
+      380
+    ){
+
+      openChat();
+
+    }
+
+    lastTapTime =
+      now;
+
+  }
+);
+
+
+/* ==========================================
+   SPEECH RECOGNITION
+========================================== */
+
+const SpeechRecognition =
+  window.SpeechRecognition ||
+  window.webkitSpeechRecognition;
+
+let recognition =
+  null;
+
+let listening =
+  false;
+
+let visualMicOn =
+  false;
+
+let recognitionBusy =
+  false;
+
+
+function setMicVisual(
+  enabled
+){
+
+  visualMicOn =
+    Boolean(enabled);
+
+  mic.classList.toggle(
+    "on",
+    visualMicOn
+  );
+
+  mic.setAttribute(
+    "aria-pressed",
+    String(visualMicOn)
+  );
+
+}
+
+
+if(SpeechRecognition){
+
+  recognition =
+    new SpeechRecognition();
+
+  recognition.lang =
+    "en-IN";
+
+  recognition.continuous =
+    false;
+
+  recognition.interimResults =
+    true;
+
+
+  recognition.onstart =
+    ()=>{
+
+      listening =
+        true;
+
+      recognitionBusy =
+        true;
+
+      setMicVisual(true);
+
+      setState(
+        "LISTENING"
+      );
+
+    };
+
+
+  recognition.onresult =
+    event=>{
+
+      let finalText =
+        "";
+
+      let interimText =
+        "";
+
+      for(
+        let i =
+          event.resultIndex;
+
+        i <
+        event.results.length;
+
+        i++
+      ){
+
+        const transcript =
+          event.results[i][0]
+            .transcript;
+
+        if(
+          event.results[i].isFinal
+        ){
+
+          finalText +=
+            transcript;
+
+        }else{
+
+          interimText +=
+            transcript;
+
+        }
+
+      }
+
+
+      const currentText =
+        (
+          finalText ||
+          interimText
+        ).trim();
+
+
+      if(currentText){
+
+        setState(
+          "THINKING"
+        );
+
+      }
+
+
+      if(finalText.trim()){
+
+        visualMicOn =
+          false;
+
+        mic.classList.remove(
+          "on"
+        );
+
+        window.NOA.ask(
+          finalText.trim()
+        );
+
+      }
+
+    };
+
+
+  recognition.onerror =
+    event=>{
+
+      console.warn(
+        "Speech recognition error:",
+        event.error
+      );
+
+      listening =
+        false;
+
+      recognitionBusy =
+        false;
+
+      setMicVisual(false);
+
+      setState(
+        "IDLE"
+      );
+
+    };
+
+
+  recognition.onend =
+    ()=>{
+
+      listening =
+        false;
+
+      recognitionBusy =
+        false;
+
+      setMicVisual(false);
+
+      if(
+        state.textContent ===
+        "LISTENING"
+      ){
+
+        setState(
+          "IDLE"
+        );
+
+      }
+
+    };
+
+}else{
+
+  console.warn(
+    "SpeechRecognition is not supported."
+  );
+
+}
+
+
+/* ==========================================
+   MIC DRAG + CLICK
+========================================== */
+
+let micPointerId =
+  null;
+
+let micDownX =
+  0;
+
+let micDownY =
+  0;
+
+let micMoved =
+  false;
+
+let micRect =
+  null;
+
+
+mic.addEventListener(
+  "pointerdown",
+  event=>{
+
+    if(
+      event.button !== undefined &&
+      event.button !== 0
+    ){
+      return;
+    }
+
+    micPointerId =
+      event.pointerId;
+
+    micDownX =
+      event.clientX;
+
+    micDownY =
+      event.clientY;
+
+    micMoved =
+      false;
+
+    micRect =
+      mic.getBoundingClientRect();
+
+    mic.classList.add(
+      "dragging"
+    );
+
+    try{
+
+      mic.setPointerCapture(
+        event.pointerId
+      );
+
+    }catch(error){}
+
+    event.preventDefault();
+
+  }
+);
+
+
+mic.addEventListener(
+  "pointermove",
+  event=>{
+
+    if(
+      event.pointerId !==
+      micPointerId
+    ){
+      return;
+    }
+
+    const dx =
+      event.clientX -
+      micDownX;
+
+    const dy =
+      event.clientY -
+      micDownY;
+
+    if(
+      Math.hypot(dx,dy) >
+      8
+    ){
+
+      micMoved =
+        true;
+
+    }
+
+    if(!micMoved){
+      return;
+    }
+
+    const width =
+      micRect.width;
+
+    const height =
+      micRect.height;
+
+    const left =
+      Math.max(
+        0,
+        Math.min(
+          window.innerWidth -
+          width,
+
+          event.clientX -
+          width / 2
+        )
+      );
+
+    const top =
+      Math.max(
+        0,
+        Math.min(
+          window.innerHeight -
+          height,
+
+          event.clientY -
+          height / 2
+        )
+      );
+
+    mic.style.left =
+      left + "px";
+
+    mic.style.top =
+      top + "px";
+
+    mic.style.right =
+      "auto";
+
+    mic.style.bottom =
+      "auto";
+
+  }
+);
+
+
+function finishMicPointer(
+  event
+){
+
+  if(
+    event.pointerId !==
+    micPointerId
+  ){
+    return;
+  }
+
+  mic.classList.remove(
+    "dragging"
+  );
+
+  try{
+
+    mic.releasePointerCapture(
+      event.pointerId
+    );
+
+  }catch(error){}
+
+  const wasMoved =
+    micMoved;
+
+  micPointerId =
+    null;
+
+  micRect =
+    null;
+
+  if(!wasMoved){
+
+    toggleListening();
+
+  }
+
+}
+
+
+mic.addEventListener(
+  "pointerup",
+  finishMicPointer
+);
+
+mic.addEventListener(
+  "pointercancel",
+  finishMicPointer
+);
+
+
+/* ==========================================
+   START / STOP LISTENING
+========================================== */
+
+function toggleListening(){
+
+  if(!recognition){
+
+    alert(
+      "Voice recognition is not supported in this browser."
+    );
+
+    return;
+
+  }
+
+
+  if(listening){
+
+    try{
+
+      recognition.stop();
+
+    }catch(error){}
+
+    return;
+
+  }
+
+
+  try{
+
+    recognition.start();
+
+  }catch(error){
+
+    console.warn(
+      "Recognition start failed:",
+      error
+    );
+
+  }
+
+}
+
+
+/* ==========================================
+   WORKER REQUEST
+========================================== */
+
+async function askWorker(
+  message
+){
+
+  const response =
+    await fetch(
+      NOA_WORKER,
+      {
+        method:"POST",
+
+        headers:{
+          "Content-Type":
+            "application/json"
+        },
+
+        body:JSON.stringify({
+          message:String(message)
+        })
+      }
+    );
+
+
+  const raw =
+    await response.text();
+
+
+  let data;
+
+  try{
+
+    data =
+      JSON.parse(raw);
+
+  }catch(error){
+
+    throw new Error(
+      "Worker returned invalid JSON: " +
+      raw.slice(0,300)
+    );
+
+  }
+
+
+  if(!response.ok){
+
+    throw new Error(
+      data.error ||
+      data.message ||
+      "Worker request failed"
+    );
+
+  }
+
+
+  const reply =
+    data.reply ||
+    data.response ||
+    data.message ||
+    (
+      data.choices &&
+      data.choices[0] &&
+      data.choices[0].message &&
+      data.choices[0].message.content
+    );
+
+
+  if(
+    typeof reply !==
+    "string" ||
+    !reply.trim()
+  ){
+
+    throw new Error(
+      "Worker returned no reply."
+    );
+
+  }
+
+
+  return reply.trim();
+
+}
+
+
+/* ==========================================
+   CHAT TYPING BUBBLE
+========================================== */
+
+function addTypingBubble(){
+
+  const bubble =
+    document.createElement(
+      "div"
+    );
+
+  bubble.className =
+    "message noa typing";
+
+  bubble.innerHTML =
+    '<span class="messageLabel">NOA</span>' +
+    '<span class="typingDots">' +
+    '<span></span>' +
+    '<span></span>' +
+    '<span></span>' +
+    '</span>';
+
+  chatHistory.appendChild(
+    bubble
+  );
+
+  scrollChatBottom();
+
+  return bubble;
+
+}
+
+
+/* ==========================================
+   CHAT SEND
+========================================== */
+
+let requestRunning =
+  false;
+
+
+async function sendMessage(
+  text
+){
+
+  const message =
+    String(text || "")
+      .trim();
+
+  if(
+    !message ||
+    requestRunning
+  ){
+
+    return;
+
+  }
+
+
+  requestRunning =
+    true;
+
+  sendChat.disabled =
+    true;
+
+
+  addMessage(
+    "user",
+    message
+  );
+
+
+  chatInput.value =
+    "";
+
+
+  const typing =
+    addTypingBubble();
+
+
+  setState(
+    "THINKING"
+  );
+
+
+  try{
+
+    const reply =
+      await askWorker(
+        message
+      );
+
+
+    if(typing){
+
+      typing.remove();
+
+    }
+
+
+    /*
+     * Complete sentence goes
+     * into chat history.
+     */
+    addMessage(
+      "noa",
+      reply
+    );
+
+
+    /*
+     * NOA speaks only the actual
+     * Worker response.
+     */
+    window.NOA.speak(
+      reply
+    );
+
+
+  }catch(error){
+
+    if(typing){
+
+      typing.remove();
+
+    }
+
+
+    const errorText =
+      "Sorry, I couldn't connect to my brain right now.";
+
+
+    addMessage(
+      "noa",
+      errorText
+    );
+
+
+    console.error(
+      "NOA Worker error:",
+      error
+    );
+
+
+    setState(
+      "IDLE"
+    );
+
+  }finally{
+
+    requestRunning =
+      false;
+
+    sendChat.disabled =
+      false;
+
+    scrollChatBottom();
+
+  }
+
+}
+
+
+sendChat.addEventListener(
+  "click",
+  ()=>{
+    sendMessage(
+      chatInput.value
+    );
+  }
+);
+
+
+chatInput.addEventListener(
+  "keydown",
+  event=>{
+
+    if(
+      event.key ===
+      "Enter"
+    ){
+
+      event.preventDefault();
+
+      sendMessage(
+        chatInput.value
+      );
+
+    }
+
+  }
+);
+
+
+/* ==========================================
+   NOA ASK
+========================================== */
+
+window.NOA.ask =
+  async function(text){
+
+    const value =
+      String(text || "")
+        .trim();
+
+    if(!value){
+      return;
+    }
+
+
+    /*
+     * Voice question is also saved
+     * in chat history.
+     */
+    addMessage(
+      "user",
+      value
+    );
+
+
+    /*
+     * Open popup automatically when
+     * voice conversation produces
+     * a response, so the complete
+     * sentence can be seen.
+     */
+    openChat();
+
+
+    const typing =
+      addTypingBubble();
+
+
+    setState(
+      "THINKING"
+    );
+
+
+    try{
+
+      const reply =
+        await askWorker(
+          value
+        );
+
+
+      if(typing){
+
+        typing.remove();
+
+      }
+
+
+      addMessage(
+        "noa",
+        reply
+      );
+
+
+      window.NOA.speak(
+        reply
+      );
+
+
+    }catch(error){
+
+      if(typing){
+
+        typing.remove();
+
+      }
+
+
+      addMessage(
+        "noa",
+        "Sorry, I couldn't connect to my brain right now."
+      );
+
+
+      console.error(
+        "NOA voice request error:",
+        error
+      );
+
+
+      setState(
+        "IDLE"
+      );
+
+    }
+
+  };
+
+
+/* ==========================================
+   SPEECH OUTPUT
+========================================== */
+
+let speechFallbackTimer =
+  null;
+
+
+function clearSpeechDisplay(){
+
+  if(speechFallbackTimer){
+
+    clearInterval(
+      speechFallbackTimer
+    );
+
+    speechFallbackTimer =
+      null;
+
+  }
+
+  spokenText.textContent =
+    "";
+
+}
+
+
+function showWordsFallback(
+  text,
+  duration
+){
+
+  const words =
+    String(text)
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+
+  if(!words.length){
+    return;
+  }
+
+
+  let index =
+    0;
+
+
+  const interval =
+    Math.max(
+      100,
+      Math.floor(
+        duration /
+        words.length
+      )
+    );
+
+
+  speechFallbackTimer =
+    setInterval(
+      ()=>{
+
+        index++;
+
+
+        spokenText.textContent =
+          words
+            .slice(
+              0,
+              index
+            )
+            .join(" ");
+
+
+        if(
+          index >=
+          words.length
+        ){
+
+          clearInterval(
+            speechFallbackTimer
+          );
+
+          speechFallbackTimer =
+            null;
+
+        }
+
+      },
+      interval
+    );
+
+}
+
+
+window.NOA.speak =
+  function(text){
+
+    const value =
+      String(text || "")
+        .trim();
+
+    if(!value){
+
+      setState(
+        "IDLE"
+      );
+
+      return;
+
+    }
+
+
+    if(
+      !("speechSynthesis" in window)
+    ){
+
+      setState(
+        "IDLE"
+      );
+
+      return;
+
+    }
+
+
+    window.speechSynthesis.cancel();
+
+    clearSpeechDisplay();
+
+
+    const utterance =
+      new SpeechSynthesisUtterance(
+        value
+      );
+
+
+    utterance.rate =
+      1.02;
+
+    utterance.pitch =
+      1;
+
+    utterance.volume =
+      1;
+
+
+    let boundarySupported =
+      false;
+
+
+    utterance.onstart =
+      ()=>{
+
+        setState(
+          "SPEAKING"
+        );
+
+      };
+
+
+    /*
+     * Browser speech boundary gives
+     * the exact character currently
+     * being spoken.
+     */
+    utterance.onboundary =
+      event=>{
+
+        if(
+          event.name !==
+          "word"
+        ){
+
+          return;
+
+        }
+
+
+        boundarySupported =
+          true;
+
+
+        const start =
+          Math.max(
+            0,
+            event.charIndex || 0
+          );
+
+
+        spokenText.textContent =
+          value.slice(
+            0,
+            start
+          ).trim();
+
+
+        /*
+         * Include the current word.
+         */
+        const remaining =
+          value.slice(
+            start
+          );
+
+
+        const match =
+          remaining.match(
+            /^\S+/
+          );
+
+
+        if(match){
+
+          spokenText.textContent =
+            (
+              value.slice(
+                0,
+                start
+              ) +
+              match[0]
+            ).trim();
+
+        }
+
+      };
+
+
+    utterance.onend =
+      ()=>{
+
+        clearSpeechDisplay();
+
+        setState(
+          "COMPLETE"
+        );
+
+
+        setTimeout(
+          ()=>{
+            setState(
+              "IDLE"
+            );
+          },
+          500
+        );
+
+      };
+
+
+    utterance.onerror =
+      event=>{
+
+        console.warn(
+          "Speech synthesis error:",
+          event
+        );
+
+        clearSpeechDisplay();
+
+        setState(
+          "IDLE"
+        );
+
+      };
+
+
+    /*
+     * Fallback for browsers that
+     * don't emit word boundaries.
+     */
+    const estimatedDuration =
+      Math.max(
+        1200,
+        value
+          .split(/\s+/)
+          .filter(Boolean)
+          .length *
+          190
+      );
+
+
+    setTimeout(
+      ()=>{
+
+        if(
+          !boundarySupported &&
+          state.textContent ===
+          "SPEAKING"
+        ){
+
+          showWordsFallback(
+            value,
+            estimatedDuration
+          );
+
+        }
+
+      },
+      300
+    );
+
+
+    window.speechSynthesis.speak(
+      utterance
+    );
+
+  };
+
+
+/* ==========================================
+   INITIALISE
+========================================== */
+
+renderHistory();
+
+setState(
+  "IDLE"
+);
+
+console.log(
+  "NOA Brain UI ready."
+);
+
+console.log(
+  "Worker:",
+  NOA_WORKER
+);
+
 </script>
+
 </body>
-  </html>
+</html>
