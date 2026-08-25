@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
 <meta name="theme-color" content="#000000">
+
 <title>NOA</title>
 
 <style>
@@ -12,7 +15,8 @@
   -webkit-tap-highlight-color:transparent;
 }
 
-html,body{
+html,
+body{
   margin:0;
   width:100%;
   height:100%;
@@ -26,73 +30,85 @@ body{
   touch-action:manipulation;
 }
 
-button,input{
+button,
+input{
   font-family:inherit;
 }
 
 #app{
   position:fixed;
   inset:0;
+
   display:flex;
   align-items:center;
   justify-content:center;
+
   overflow:hidden;
 }
 
-/* =========================
+/* =========================================================
    ORB
-========================= */
+========================================================= */
 
 #orb{
   position:relative;
-  width:225px;
-  height:225px;
-  flex:0 0 225px;
-  transform:none;
-  transform-origin:center center;
+
+  width:280px;
+  height:280px;
+  flex:0 0 280px;
+
   user-select:none;
   -webkit-user-select:none;
-  will-change:auto;
+
+  transform:none;
+  transform-origin:center center;
 }
 
 #orbGlow{
   position:absolute;
-  inset:-55px;
+  inset:-65px;
+
   border-radius:50%;
 
   background:
     radial-gradient(
       circle,
-      rgba(30,110,255,.34),
-      rgba(20,80,220,.10) 42%,
+      rgba(30,110,255,.36),
+      rgba(20,80,220,.12) 42%,
       transparent 72%
     );
 
-  filter:blur(18px);
+  filter:blur(20px);
+
   animation:breathe 4.5s ease-in-out infinite;
+
   pointer-events:none;
 }
 
 @keyframes breathe{
+
   0%,100%{
     opacity:.68;
     transform:scale(1);
   }
+
   50%{
     opacity:1;
     transform:scale(1.05);
   }
 }
 
-/* =========================
+/* =========================================================
    SVG
-========================= */
+========================================================= */
 
 #orb svg{
   position:absolute;
   inset:0;
+
   width:100%;
   height:100%;
+
   overflow:visible;
   pointer-events:none;
 }
@@ -124,53 +140,63 @@ button,input{
 }
 
 @keyframes r2{
+
   from{
     transform:rotate(360deg);
   }
+
   to{
     transform:rotate(0deg);
   }
 }
 
 @keyframes r3{
+
   to{
     transform:rotate(-360deg);
   }
 }
 
-/* =========================
+/* =========================================================
    CENTER
-========================= */
+========================================================= */
 
 #center{
   position:absolute;
   inset:0;
+
   z-index:5;
+
   pointer-events:none;
 }
 
 #wave{
   position:absolute;
+
   left:50%;
   top:50%;
 
-  width:120px;
-  height:30px;
+  width:150px;
+  height:34px;
 
   transform:translate(-50%,-50%);
 
   display:flex;
   align-items:center;
   justify-content:center;
+
   gap:3px;
 
   opacity:0;
+
   transition:opacity .15s ease;
 }
 
 #wave i{
   display:block;
+
   width:2px;
+
   border-radius:4px;
 
   background:#4fa3ff;
@@ -179,15 +205,19 @@ button,input{
     0 0 6px rgba(79,163,255,.75),
     0 0 12px rgba(79,163,255,.25);
 
-  animation:wave 1s ease-in-out infinite alternate;
+  animation:
+    wave 1s ease-in-out infinite alternate;
+
   transform-origin:center;
 }
 
 @keyframes wave{
+
   from{
     transform:scaleY(.25);
     opacity:.32;
   }
+
   to{
     transform:scaleY(1);
     opacity:1;
@@ -196,13 +226,15 @@ button,input{
 
 #state{
   position:absolute;
+
   left:50%;
-  top:calc(50% + 23px);
+  top:calc(50% + 27px);
 
   transform:translateX(-50%);
 
-  font-size:9px;
+  font-size:10px;
   line-height:1;
+
   letter-spacing:3px;
 
   text-transform:uppercase;
@@ -217,18 +249,19 @@ button,input{
 
 #spokenText{
   position:absolute;
+
   left:50%;
-  top:calc(50% + 42px);
+  top:calc(50% + 48px);
 
   transform:translateX(-50%);
 
-  width:185px;
+  width:205px;
 
   text-align:center;
 
   color:#4fa3ff;
 
-  font-size:10px;
+  font-size:11px;
   line-height:1.45;
   letter-spacing:.4px;
 
@@ -237,6 +270,7 @@ button,input{
     0 0 14px rgba(79,163,255,.45);
 
   opacity:0;
+
   transition:opacity .15s ease;
 
   z-index:10;
@@ -290,15 +324,16 @@ body[data-state="complete"] #orbGlow{
 }
 
 @keyframes pulse{
+
   50%{
     transform:scale(1.2);
     opacity:1;
   }
 }
 
-/* =========================
+/* =========================================================
    MIC
-========================= */
+========================================================= */
 
 #mic{
   position:fixed;
@@ -306,10 +341,11 @@ body[data-state="complete"] #orbGlow{
   right:28px;
   bottom:28px;
 
-  width:48px;
-  height:48px;
+  width:50px;
+  height:50px;
 
   border-radius:50%;
+
   z-index:30;
 
   display:flex;
@@ -319,18 +355,21 @@ body[data-state="complete"] #orbGlow{
   border:2px solid #4fa3ff;
 
   background:rgba(79,163,255,.12);
+
   color:#4fa3ff;
 
   box-shadow:
     0 0 22px rgba(79,163,255,.25),
     inset 0 0 10px rgba(79,163,255,.08);
 
-  font-size:18px;
+  font-size:19px;
 
   user-select:none;
+
   touch-action:none;
 
   cursor:grab;
+
   padding:0;
 
   transition:
@@ -346,7 +385,9 @@ body[data-state="complete"] #orbGlow{
 
 #mic.on{
   border-color:#35e887;
+
   color:#35e887;
+
   background:rgba(53,232,135,.16);
 
   box-shadow:
@@ -355,9 +396,9 @@ body[data-state="complete"] #orbGlow{
     inset 0 0 12px rgba(53,232,135,.12);
 }
 
-/* =========================
+/* =========================================================
    CHAT
-========================= */
+========================================================= */
 
 #chatOverlay{
   position:fixed;
@@ -375,6 +416,7 @@ body[data-state="complete"] #orbGlow{
   -webkit-backdrop-filter:blur(6px);
 
   opacity:0;
+
   pointer-events:none;
 
   transition:opacity .2s ease;
@@ -393,6 +435,7 @@ body[data-state="complete"] #orbGlow{
   flex-direction:column;
 
   border:1px solid rgba(79,163,255,.45);
+
   border-radius:20px;
 
   background:
@@ -409,6 +452,7 @@ body[data-state="complete"] #orbGlow{
   overflow:hidden;
 
   transform:scale(.94);
+
   transition:transform .2s ease;
 }
 
@@ -418,10 +462,13 @@ body[data-state="complete"] #orbGlow{
 
 #chatHeader{
   height:54px;
+
   flex-shrink:0;
 
   display:flex;
+
   align-items:center;
+
   justify-content:space-between;
 
   padding:0 12px 0 18px;
@@ -432,8 +479,11 @@ body[data-state="complete"] #orbGlow{
 
 #chatTitle{
   color:#7dbdff;
+
   font-size:11px;
+
   letter-spacing:3px;
+
   text-transform:uppercase;
 }
 
@@ -447,12 +497,15 @@ body[data-state="complete"] #orbGlow{
   height:34px;
 
   border:1px solid rgba(79,163,255,.25);
+
   border-radius:9px;
 
   background:rgba(79,163,255,.07);
+
   color:#9dccff;
 
   cursor:pointer;
+
   font-size:15px;
 
   padding:0;
@@ -467,7 +520,9 @@ body[data-state="complete"] #orbGlow{
   padding:14px;
 
   display:flex;
+
   flex-direction:column;
+
   gap:10px;
 
   scrollbar-width:thin;
@@ -481,9 +536,11 @@ body[data-state="complete"] #orbGlow{
   border-radius:13px;
 
   font-size:13px;
+
   line-height:1.5;
 
   white-space:pre-wrap;
+
   word-break:break-word;
 }
 
@@ -526,6 +583,7 @@ body[data-state="complete"] #orbGlow{
   text-transform:uppercase;
 
   color:#6dafff;
+
   opacity:.7;
 }
 
@@ -541,6 +599,7 @@ body[data-state="complete"] #orbGlow{
 
 #chatInputArea{
   display:flex;
+
   gap:7px;
 
   padding:10px;
@@ -551,6 +610,7 @@ body[data-state="complete"] #orbGlow{
 
 #chatInput{
   flex:1;
+
   min-width:0;
 
   height:42px;
@@ -589,19 +649,20 @@ body[data-state="complete"] #orbGlow{
   cursor:pointer;
 
   font-size:17px;
+
   padding:0;
 }
 
-/* =========================
+/* =========================================================
    MOBILE
-========================= */
+========================================================= */
 
 @media(max-width:500px){
 
   #orb{
-    width:225px;
-    height:225px;
-    flex-basis:225px;
+    width:280px;
+    height:280px;
+    flex-basis:280px;
   }
 
   #mic{
@@ -616,12 +677,12 @@ body[data-state="complete"] #orbGlow{
   }
 }
 
-@media(max-height:600px){
+@media(max-height:650px){
 
   #orb{
-    width:225px;
-    height:225px;
-    flex-basis:225px;
+    width:260px;
+    height:260px;
+    flex-basis:260px;
   }
 }
 </style>
@@ -667,6 +728,7 @@ body[data-state="complete"] #orbGlow{
         </radialGradient>
 
         <linearGradient id="a">
+
           <stop
             stop-color="#bfe0ff"
             stop-opacity="0"/>
@@ -679,9 +741,11 @@ body[data-state="complete"] #orbGlow{
             offset="1"
             stop-color="#bfe0ff"
             stop-opacity="0"/>
+
         </linearGradient>
 
         <linearGradient id="b">
+
           <stop
             stop-color="#dff0ff"
             stop-opacity="0"/>
@@ -694,9 +758,13 @@ body[data-state="complete"] #orbGlow{
             offset="1"
             stop-color="#dff0ff"
             stop-opacity="0"/>
+
         </linearGradient>
 
       </defs>
+
+
+      <!-- CORE -->
 
       <circle
         cx="140"
@@ -704,7 +772,10 @@ body[data-state="complete"] #orbGlow{
         r="110"
         fill="url(#core)"/>
 
+
       <g filter="url(#glow)">
+
+        <!-- RING 1 -->
 
         <g class="r1">
 
@@ -721,6 +792,9 @@ body[data-state="complete"] #orbGlow{
 
         </g>
 
+
+        <!-- RING 2 -->
+
         <g class="r2">
 
           <path
@@ -735,6 +809,9 @@ body[data-state="complete"] #orbGlow{
             stroke-linecap="round"/>
 
         </g>
+
+
+        <!-- DOTTED RING -->
 
         <g class="r3">
 
@@ -751,6 +828,9 @@ body[data-state="complete"] #orbGlow{
 
         </g>
 
+
+        <!-- SECOND DOTTED RING -->
+
         <g class="r4">
 
           <ellipse
@@ -766,6 +846,9 @@ body[data-state="complete"] #orbGlow{
 
         </g>
 
+
+        <!-- OUTER CIRCLE -->
+
         <circle
           cx="140"
           cy="140"
@@ -776,6 +859,9 @@ body[data-state="complete"] #orbGlow{
           stroke-width="1"/>
 
       </g>
+
+
+      <!-- LIGHT POINTS -->
 
       <g filter="url(#soft)">
 
@@ -819,11 +905,14 @@ body[data-state="complete"] #orbGlow{
 
     </svg>
 
+
     <div id="center">
 
       <div id="wave"></div>
 
-      <div id="state">IDLE</div>
+      <div id="state">
+        IDLE
+      </div>
 
       <div id="spokenText"></div>
 
@@ -834,13 +923,23 @@ body[data-state="complete"] #orbGlow{
 </div>
 
 
+<!-- =====================================================
+     MIC
+===================================================== -->
+
 <button
   id="mic"
   aria-label="Microphone"
   aria-pressed="false">
+
   🎙
+
 </button>
 
+
+<!-- =====================================================
+     CHAT
+===================================================== -->
 
 <div id="chatOverlay">
 
@@ -858,25 +957,32 @@ body[data-state="complete"] #orbGlow{
           class="chatAction"
           id="clearChat"
           title="Clear history">
+
           ⌫
+
         </button>
 
         <button
           class="chatAction"
           id="closeChat"
           title="Close">
+
           ×
+
         </button>
 
       </div>
 
     </div>
 
+
     <div id="chatHistory"></div>
+
 
     <div id="chatHint">
       Double-tap the orb to open chat
     </div>
+
 
     <div id="chatInputArea">
 
@@ -889,7 +995,9 @@ body[data-state="complete"] #orbGlow{
       <button
         id="sendChat"
         aria-label="Send">
+
         ➤
+
       </button>
 
     </div>
@@ -902,9 +1010,9 @@ body[data-state="complete"] #orbGlow{
 <script>
 "use strict";
 
-/* =========================
+/* =========================================================
    ELEMENTS
-========================= */
+========================================================= */
 
 const body =
   document.body;
@@ -943,22 +1051,23 @@ const clearChat =
   document.getElementById("clearChat");
 
 
-/* =========================
+/* =========================================================
    WORKER
-========================= */
+========================================================= */
 
 const NOA_WORKER =
   "https://noa-brain-a78d.ajaiacharya7274.workers.dev/api/chat";
 
 
-/* =========================
+/* =========================================================
    STATE
-========================= */
+========================================================= */
 
 function setState(value){
 
   const next =
     String(value || "IDLE")
+      .trim()
       .toUpperCase();
 
   body.dataset.state =
@@ -968,24 +1077,39 @@ function setState(value){
     next;
 }
 
+
+/* =========================================================
+   NOA API
+========================================================= */
+
 window.NOA = {
+
   setState,
+
   getState(){
+
     return state.textContent;
+
   },
+
   ask
+
 };
 
 
-/* =========================
+/* =========================================================
    WAVEFORM
-========================= */
+========================================================= */
 
-[
+const waveHeights = [
+
   5,8,12,18,11,23,16,29,19,
   24,14,9,6,10,16,22,15,20,
   27,17,10,14,20,25,15,9,5
-].forEach(
+
+];
+
+waveHeights.forEach(
   (height,index)=>{
 
     const bar =
@@ -998,43 +1122,57 @@ window.NOA = {
       (index * .04) + "s";
 
     wave.appendChild(bar);
+
   }
 );
 
 
-/* =========================
+/* =========================================================
    CHAT STORAGE
-========================= */
+========================================================= */
 
 const STORAGE_KEY =
   "NOA_CHAT_HISTORY_V1";
 
 let history = [];
 
-try{
 
-  const stored =
-    localStorage.getItem(
-      STORAGE_KEY
+function loadHistory(){
+
+  try{
+
+    const stored =
+      localStorage.getItem(
+        STORAGE_KEY
+      );
+
+    if(!stored){
+
+      history = [];
+
+      return;
+
+    }
+
+    const parsed =
+      JSON.parse(stored);
+
+    history =
+      Array.isArray(parsed)
+        ? parsed
+        : [];
+
+  }catch(error){
+
+    console.warn(
+      "History load failed:",
+      error
     );
 
-  history =
-    stored
-      ? JSON.parse(stored)
-      : [];
-
-  if(!Array.isArray(history)){
     history = [];
+
   }
 
-}catch(error){
-
-  console.warn(
-    "History load failed",
-    error
-  );
-
-  history = [];
 }
 
 
@@ -1050,84 +1188,140 @@ function saveHistory(){
   }catch(error){
 
     console.warn(
-      "History save failed",
+      "History save failed:",
       error
     );
+
   }
+
 }
 
 
 function renderHistory(){
 
-  chatHistory.innerHTML = "";
+  chatHistory.innerHTML =
+    "";
 
-  history.forEach(item=>{
+  history.forEach(
+    item=>{
 
-    const bubble =
-      document.createElement("div");
+      if(
+        !item ||
+        typeof item.text !== "string"
+      ){
 
-    bubble.className =
-      "message " +
-      (
+        return;
+
+      }
+
+      const bubble =
+        document.createElement("div");
+
+      bubble.className =
+        "message " +
+        (
+          item.role === "user"
+            ? "user"
+            : "noa"
+        );
+
+
+      const label =
+        document.createElement("span");
+
+      label.className =
+        "messageLabel";
+
+      label.textContent =
         item.role === "user"
-          ? "user"
-          : "noa"
+          ? "YOU"
+          : "NOA";
+
+
+      const content =
+        document.createElement("span");
+
+      content.textContent =
+        item.text;
+
+
+      bubble.appendChild(
+        label
       );
 
-    const label =
-      document.createElement("span");
+      bubble.appendChild(
+        content
+      );
 
-    label.className =
-      "messageLabel";
+      chatHistory.appendChild(
+        bubble
+      );
 
-    label.textContent =
-      item.role === "user"
-        ? "YOU"
-        : "NOA";
+    }
+  );
 
-    const content =
-      document.createElement("span");
 
-    content.textContent =
-      item.text;
+  requestAnimationFrame(
+    ()=>{
+      chatHistory.scrollTop =
+        chatHistory.scrollHeight;
+    }
+  );
 
-    bubble.appendChild(label);
-    bubble.appendChild(content);
-
-    chatHistory.appendChild(bubble);
-
-  });
-
-  chatHistory.scrollTop =
-    chatHistory.scrollHeight;
 }
 
 
-function addHistory(role,text){
+function addHistory(
+  role,
+  text
+){
+
+  const cleanText =
+    String(text || "").trim();
+
+  if(!cleanText){
+
+    return;
+
+  }
 
   history.push({
-    role,
-    text:String(text)
+
+    role:
+      role === "user"
+        ? "user"
+        : "assistant",
+
+    text:
+      cleanText
+
   });
+
 
   if(history.length > 100){
 
     history =
       history.slice(-100);
+
   }
 
+
   saveHistory();
+
   renderHistory();
+
 }
 
 
-/* =========================
-   CHAT OPEN/CLOSE
-========================= */
+/* =========================================================
+   CHAT OPEN / CLOSE
+========================================================= */
 
 function openChat(){
 
-  chatOverlay.classList.add("open");
+  chatOverlay.classList.add(
+    "open"
+  );
 
   renderHistory();
 
@@ -1137,12 +1331,16 @@ function openChat(){
     },
     150
   );
+
 }
 
 
 function closeChatPopup(){
 
-  chatOverlay.classList.remove("open");
+  chatOverlay.classList.remove(
+    "open"
+  );
+
 }
 
 
@@ -1153,6 +1351,7 @@ closeChat.addEventListener(
     event.stopPropagation();
 
     closeChatPopup();
+
   }
 );
 
@@ -1161,9 +1360,15 @@ chatOverlay.addEventListener(
   "click",
   event=>{
 
-    if(event.target === chatOverlay){
+    if(
+      event.target ===
+      chatOverlay
+    ){
+
       closeChatPopup();
+
     }
+
   }
 );
 
@@ -1175,7 +1380,9 @@ clearChat.addEventListener(
     event.stopPropagation();
 
     if(!history.length){
+
       return;
+
     }
 
     if(
@@ -1183,22 +1390,27 @@ clearChat.addEventListener(
         "Clear NOA chat history?"
       )
     ){
+
       return;
+
     }
 
     history = [];
 
     saveHistory();
+
     renderHistory();
+
   }
 );
 
 
-/* =========================
-   DOUBLE TAP ORB
-========================= */
+/* =========================================================
+   ORB DOUBLE TAP
+========================================================= */
 
-let lastOrbTap = 0;
+let lastOrbTap =
+  0;
 
 orb.addEventListener(
   "click",
@@ -1207,184 +1419,24 @@ orb.addEventListener(
     const now =
       Date.now();
 
-    if(
-      now - lastOrbTap < 380
-    ){
+    const doubleTap =
+      now - lastOrbTap <
+      380;
+
+
+    if(doubleTap){
 
       openChat();
+
     }
 
-    lastOrbTap = now;
+
+    lastOrbTap =
+      now;
+
   }
 );
 
 
-/* =========================
-   SPEECH RECOGNITION
-========================= */
-
-const SpeechRecognition =
-  window.SpeechRecognition ||
-  window.webkitSpeechRecognition;
-
-let recognition = null;
-let listening = false;
-
-
-function setMicVisual(on){
-
-  mic.classList.toggle(
-    "on",
-    Boolean(on)
-  );
-
-  mic.setAttribute(
-    "aria-pressed",
-    String(Boolean(on))
-  );
-}
-
-
-if(SpeechRecognition){
-
-  recognition =
-    new SpeechRecognition();
-
-  recognition.lang =
-    "en-IN";
-
-  recognition.continuous =
-    false;
-
-  recognition.interimResults =
-    true;
-
-  recognition.maxAlternatives =
-    1;
-
-
-  recognition.onstart =
-    ()=>{
-
-      listening = true;
-
-      setMicVisual(true);
-
-      setState(
-        "LISTENING"
-      );
-    };
-
-
-  recognition.onresult =
-    event=>{
-
-      let finalText = "";
-      let interimText = "";
-
-      for(
-        let i = event.resultIndex;
-        i < event.results.length;
-        i++
-      ){
-
-        const transcript =
-          event.results[i][0]
-            .transcript;
-
-        if(
-          event.results[i].isFinal
-        ){
-
-          finalText +=
-            transcript;
-
-        }else{
-
-          interimText +=
-            transcript;
-        }
-      }
-
-      const visibleText =
-        (
-          finalText ||
-          interimText
-        ).trim();
-
-      if(visibleText){
-
-        spokenText.textContent =
-          visibleText;
-      }
-
-      if(finalText.trim()){
-
-        const text =
-          finalText.trim();
-
-        setState(
-          "THINKING"
-        );
-
-        spokenText.textContent =
-          "";
-
-        ask(text);
-      }
-    };
-
-
-  recognition.onerror =
-    event=>{
-
-      console.warn(
-        "Speech recognition:",
-        event.error
-      );
-
-      listening = false;
-
-      setMicVisual(false);
-
-      spokenText.textContent =
-        "";
-
-      setState("IDLE");
-    };
-
-
-  recognition.onend =
-    ()=>{
-
-      listening = false;
-
-      setMicVisual(false);
-
-      if(
-        body.dataset.state ===
-        "listening"
-      ){
-
-        setState("IDLE");
-      }
-    };
-
-}else{
-
-  console.warn(
-    "SpeechRecognition is not supported."
-  );
-}
-
-
-/* =========================
-   MIC DRAG
-========================= */
-
-let micPointer = null;
-let micMoved = false;
-
-
-mic.addEventListener(
-  "pointerdown",
+/* =========================================================
+   SPEECH RECO
