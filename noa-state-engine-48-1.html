@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
 <meta charset="utf-8">
 
 <meta
@@ -13,6 +14,7 @@
   content="#000000">
 
 <title>NOA</title>
+
 
 <style>
 
@@ -87,11 +89,6 @@ input{
   touch-action:none;
 }
 
-
-/* =========================================================
-   ORB GLOW
-========================================================= */
-
 #orbGlow{
   position:absolute;
 
@@ -129,7 +126,7 @@ input{
 
 
 /* =========================================================
-   SVG
+   ORB SVG
 ========================================================= */
 
 #orb svg{
@@ -192,7 +189,7 @@ input{
 
 
 /* =========================================================
-   CENTER
+   ORB CENTER
 ========================================================= */
 
 #center{
@@ -204,11 +201,6 @@ input{
 
   pointer-events:none;
 }
-
-
-/* =========================================================
-   WAVEFORM
-========================================================= */
 
 #wave{
   position:absolute;
@@ -229,8 +221,6 @@ input{
   gap:3px;
 
   opacity:1;
-
-  transition:opacity .15s ease;
 }
 
 #wave i{
@@ -393,10 +383,6 @@ body[data-state="executing"] #wave i{
 
 /* =========================================================
    MIC
-   IMPORTANT:
-   FIXED POSITION.
-   NOT INSIDE ORB.
-   NOT AFFECTED BY ORB ZOOM.
 ========================================================= */
 
 #mic{
@@ -412,7 +398,6 @@ body[data-state="executing"] #wave i{
   height:48px;
 
   margin:0;
-
   padding:0;
 
   border-radius:50%;
@@ -426,7 +411,8 @@ body[data-state="executing"] #wave i{
 
   border:2px solid #4fa3ff;
 
-  background:rgba(79,163,255,.12);
+  background:
+    rgba(79,163,255,.12);
 
   color:#4fa3ff;
 
@@ -441,9 +427,9 @@ body[data-state="executing"] #wave i{
   user-select:none;
   -webkit-user-select:none;
 
-  touch-action:manipulation;
+  touch-action:none;
 
-  cursor:pointer;
+  cursor:grab;
 
   transition:
     border-color .2s ease,
@@ -451,18 +437,20 @@ body[data-state="executing"] #wave i{
     background .2s ease,
     box-shadow .2s ease;
 
-  transform:none !important;
+  transform:none;
 }
 
-
-/* MIC ACTIVE */
+#mic.dragging{
+  cursor:grabbing;
+}
 
 #mic.on{
   border-color:#35e887;
 
   color:#35e887;
 
-  background:rgba(53,232,135,.16);
+  background:
+    rgba(53,232,135,.16);
 
   box-shadow:
     0 0 30px rgba(53,232,135,.48),
@@ -487,7 +475,8 @@ body[data-state="executing"] #wave i{
   align-items:center;
   justify-content:center;
 
-  background:rgba(0,0,0,.58);
+  background:
+    rgba(0,0,0,.58);
 
   backdrop-filter:blur(6px);
   -webkit-backdrop-filter:blur(6px);
@@ -508,12 +497,21 @@ body[data-state="executing"] #wave i{
 
 /* =========================================================
    CHAT BOX
+   DRAG + RESIZE READY
 ========================================================= */
 
 #chatBox{
+  position:relative;
+
   width:min(430px,92vw);
 
   height:min(650px,80vh);
+
+  min-width:280px;
+  min-height:280px;
+
+  max-width:92vw;
+  max-height:90vh;
 
   display:flex;
 
@@ -537,22 +535,30 @@ body[data-state="executing"] #wave i{
 
   overflow:hidden;
 
-  transform:scale(.94);
+  transform:
+    translate3d(0,0,0)
+    scale(1);
 
-  transition:transform .2s ease;
-}
+  transform-origin:center center;
 
-#chatOverlay.open #chatBox{
-  transform:scale(1);
+  transition:
+    transform .2s ease;
+
+  touch-action:none;
+
+  resize:both;
 }
 
 
 /* =========================================================
    CHAT HEADER
+   HEADER IS THE DRAG HANDLE
 ========================================================= */
 
 #chatHeader{
   height:54px;
+
+  min-height:54px;
 
   flex-shrink:0;
 
@@ -566,6 +572,17 @@ body[data-state="executing"] #wave i{
 
   border-bottom:
     1px solid rgba(120,180,255,.13);
+
+  cursor:grab;
+
+  user-select:none;
+  -webkit-user-select:none;
+
+  touch-action:none;
+}
+
+#chatHeader.dragging{
+  cursor:grabbing;
 }
 
 #chatTitle{
@@ -576,17 +593,23 @@ body[data-state="executing"] #wave i{
   letter-spacing:3px;
 
   text-transform:uppercase;
+
+  pointer-events:none;
 }
 
 #chatActions{
   display:flex;
 
   gap:7px;
+
+  cursor:default;
 }
 
 .chatAction{
   width:34px;
   height:34px;
+
+  flex:0 0 34px;
 
   border:
     1px solid rgba(79,163,255,.25);
@@ -607,6 +630,8 @@ body[data-state="executing"] #wave i{
   font-weight:700;
 
   -webkit-tap-highlight-color:transparent;
+
+  touch-action:manipulation;
 }
 
 
@@ -616,6 +641,8 @@ body[data-state="executing"] #wave i{
 
 #chatHistory{
   flex:1;
+
+  min-height:0;
 
   overflow-y:auto;
   overflow-x:hidden;
@@ -629,6 +656,8 @@ body[data-state="executing"] #wave i{
   gap:10px;
 
   scrollbar-width:thin;
+
+  touch-action:pan-y;
 }
 
 .message{
@@ -708,6 +737,8 @@ body[data-state="executing"] #wave i{
   font-size:9px;
 
   text-align:center;
+
+  flex-shrink:0;
 }
 
 
@@ -724,6 +755,8 @@ body[data-state="executing"] #wave i{
 
   border-top:
     1px solid rgba(120,180,255,.13);
+
+  flex-shrink:0;
 }
 
 #chatInput{
@@ -761,6 +794,8 @@ body[data-state="executing"] #wave i{
   width:44px;
   height:42px;
 
+  flex:0 0 44px;
+
   border:
     1px solid rgba(79,163,255,.35);
 
@@ -780,6 +815,53 @@ body[data-state="executing"] #wave i{
 
 
 /* =========================================================
+   CHAT ZOOM CONTROLS
+========================================================= */
+
+#chatZoomControls{
+  position:absolute;
+
+  right:12px;
+  top:64px;
+
+  z-index:10;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:5px;
+
+  opacity:.8;
+}
+
+.chatZoomButton{
+  width:30px;
+  height:30px;
+
+  border:
+    1px solid rgba(79,163,255,.25);
+
+  border-radius:8px;
+
+  background:
+    rgba(5,18,38,.75);
+
+  color:#8fc8ff;
+
+  cursor:pointer;
+
+  font-size:16px;
+
+  line-height:1;
+
+  padding:0;
+
+  touch-action:manipulation;
+}
+
+
+/* =========================================================
    MOBILE
 ========================================================= */
 
@@ -788,6 +870,7 @@ body[data-state="executing"] #wave i{
   #orb{
     width:280px;
     height:280px;
+
     flex-basis:280px;
   }
 
@@ -798,11 +881,14 @@ body[data-state="executing"] #wave i{
 
   #chatBox{
     width:92vw;
-
     height:78vh;
+
+    min-width:260px;
+    min-height:260px;
 
     border-radius:18px;
   }
+
 }
 
 
@@ -818,11 +904,12 @@ body[data-state="executing"] #wave i{
 
     flex-basis:240px;
   }
+
 }
 
 
 /* =========================================================
-   REDUCE MOTION
+   REDUCED MOTION
 ========================================================= */
 
 @media(prefers-reduced-motion:reduce){
@@ -833,12 +920,17 @@ body[data-state="executing"] #wave i{
   .r3,
   .r4,
   #wave i{
-    animation-duration:0.001ms !important;
+
+    animation-duration:.001ms !important;
+
     animation-iteration-count:1 !important;
+
   }
+
 }
 
 </style>
+
 </head>
 
 
@@ -846,7 +938,7 @@ body[data-state="executing"] #wave i{
 
 
 <!-- =======================================================
-     APP
+     MAIN APP
 ======================================================= -->
 
 <div id="app">
@@ -865,6 +957,7 @@ body[data-state="executing"] #wave i{
       aria-hidden="true">
 
       <defs>
+
 
         <filter
           id="glow"
@@ -1033,7 +1126,7 @@ body[data-state="executing"] #wave i{
         </g>
 
 
-        <!-- MAIN RING -->
+        <!-- OUTER RING -->
 
         <circle
           cx="140"
@@ -1093,7 +1186,7 @@ body[data-state="executing"] #wave i{
 
 
     <!-- =================================================
-         CENTER
+         ORB CENTER
     ================================================= -->
 
     <div id="center">
@@ -1115,17 +1208,13 @@ body[data-state="executing"] #wave i{
 
 <!-- =======================================================
      MIC
-
-     IMPORTANT:
-     This is OUTSIDE #orb.
-     Therefore orb zoom cannot scale or move it.
 ======================================================= -->
 
 <button
   id="mic"
+  type="button"
   aria-label="Microphone"
-  aria-pressed="false"
-  type="button">
+  aria-pressed="false">
 
   🎙
 
@@ -1133,15 +1222,19 @@ body[data-state="executing"] #wave i{
 
 
 <!-- =======================================================
-     CHAT
+     CHAT OVERLAY
 ======================================================= -->
 
 <div id="chatOverlay">
 
-  <div id="chatBox">
+  <div
+    id="chatBox"
+    aria-label="NOA Chat">
 
 
-    <!-- HEADER -->
+    <!-- =================================================
+         CHAT HEADER / DRAG HANDLE
+    ================================================= -->
 
     <div id="chatHeader">
 
@@ -1155,8 +1248,8 @@ body[data-state="executing"] #wave i{
         <button
           class="chatAction"
           id="clearChat"
-          title="Clear history"
-          type="button">
+          type="button"
+          title="Clear history">
 
           ⌫
 
@@ -1166,8 +1259,8 @@ body[data-state="executing"] #wave i{
         <button
           class="chatAction"
           id="closeChat"
-          title="Close"
-          type="button">
+          type="button"
+          title="Close">
 
           ×
 
@@ -1178,19 +1271,68 @@ body[data-state="executing"] #wave i{
     </div>
 
 
-    <!-- HISTORY -->
+    <!-- =================================================
+         CHAT ZOOM CONTROLS
+    ================================================= -->
+
+    <div id="chatZoomControls">
+
+      <button
+        class="chatZoomButton"
+        id="chatZoomIn"
+        type="button"
+        title="Zoom in">
+
+        +
+
+      </button>
+
+
+      <button
+        class="chatZoomButton"
+        id="chatZoomReset"
+        type="button"
+        title="Reset zoom">
+
+        ◦
+
+      </button>
+
+
+      <button
+        class="chatZoomButton"
+        id="chatZoomOut"
+        type="button"
+        title="Zoom out">
+
+        −
+
+      </button>
+
+    </div>
+
+
+    <!-- =================================================
+         CHAT HISTORY
+    ================================================= -->
 
     <div id="chatHistory"></div>
 
 
-    <!-- HINT -->
+    <!-- =================================================
+         CHAT HINT
+    ================================================= -->
 
     <div id="chatHint">
+
       Double-tap the orb to open chat
+
     </div>
 
 
-    <!-- INPUT -->
+    <!-- =================================================
+         CHAT INPUT
+    ================================================= -->
 
     <div id="chatInputArea">
 
@@ -1203,8 +1345,8 @@ body[data-state="executing"] #wave i{
 
       <button
         id="sendChat"
-        aria-label="Send"
-        type="button">
+        type="button"
+        aria-label="Send">
 
         ➤
 
@@ -1217,20 +1359,41 @@ body[data-state="executing"] #wave i{
 </div>
 
 
-<script>
+<!-- =======================================================
+     PART 1 END
+     
+     DO NOT DELETE THIS COMMENT.
+     PART 2 STARTS DIRECTLY AFTER THIS LINE.
+======================================================= -->
+
+
+<!-- PART 2 STARTS HERE -->
+  <script>
 
 "use strict";
 
 
 /* =========================================================
-   ELEMENTS
+   NOA // PART 2
+   JAVASCRIPT CORE
+========================================================= */
+
+
+/* =========================================================
+   ELEMENT REFERENCES
 ========================================================= */
 
 const body =
   document.body;
 
+const app =
+  document.getElementById("app");
+
 const orb =
   document.getElementById("orb");
+
+const orbGlow =
+  document.getElementById("orbGlow");
 
 const wave =
   document.getElementById("wave");
@@ -1247,8 +1410,17 @@ const mic =
 const chatOverlay =
   document.getElementById("chatOverlay");
 
+const chatBox =
+  document.getElementById("chatBox");
+
+const chatHeader =
+  document.getElementById("chatHeader");
+
 const chatHistory =
   document.getElementById("chatHistory");
+
+const chatHint =
+  document.getElementById("chatHint");
 
 const chatInput =
   document.getElementById("chatInput");
@@ -1262,6 +1434,15 @@ const closeChat =
 const clearChat =
   document.getElementById("clearChat");
 
+const chatZoomIn =
+  document.getElementById("chatZoomIn");
+
+const chatZoomOut =
+  document.getElementById("chatZoomOut");
+
+const chatZoomReset =
+  document.getElementById("chatZoomReset");
+
 
 /* =========================================================
    NOA WORKER
@@ -1272,33 +1453,47 @@ const NOA_WORKER =
 
 
 /* =========================================================
-   STATE
+   GENERAL STATE
+========================================================= */
+
+let currentState =
+  "idle";
+
+let listening =
+  false;
+
+
+/* =========================================================
+   STATE CONTROLLER
 ========================================================= */
 
 function setState(value){
 
   const next =
-    String(value || "IDLE")
-      .toUpperCase();
+    String(value || "idle")
+      .trim()
+      .toLowerCase();
+
+  currentState =
+    next;
 
   body.dataset.state =
-    next.toLowerCase();
+    next;
 
   state.textContent =
-    next;
+    next.toUpperCase();
+
 }
 
-
-/* =========================================================
-   PUBLIC NOA API
-========================================================= */
 
 window.NOA = {
 
   setState,
 
   getState(){
+
     return state.textContent;
+
   },
 
   ask
@@ -1310,11 +1505,16 @@ window.NOA = {
    WAVEFORM
 ========================================================= */
 
-[
+const waveformHeights = [
+
   5,8,12,18,11,23,16,29,19,
   24,14,9,6,10,16,22,15,20,
   27,17,10,14,20,25,15,9,5
-].forEach(
+
+];
+
+
+waveformHeights.forEach(
   (height,index)=>{
 
     const bar =
@@ -1324,9 +1524,11 @@ window.NOA = {
       height + "px";
 
     bar.style.animationDelay =
-      (index * .04) + "s";
+      (index * 0.04) + "s";
 
-    wave.appendChild(bar);
+    wave.appendChild(
+      bar
+    );
 
   }
 );
@@ -1336,54 +1538,96 @@ window.NOA = {
    ORB ZOOM
 ========================================================= */
 
-let zoom = 1;
+let zoom =
+  1;
 
-const MIN_ZOOM = .5;
-const MAX_ZOOM = 2.5;
+const MIN_ZOOM =
+  0.5;
+
+const MAX_ZOOM =
+  2.5;
 
 
-function applyZoom(){
+function clamp(
+  value,
+  minimum,
+  maximum
+){
 
-  orb.style.transform =
-    "scale(" + zoom + ")";
+  return Math.max(
+    minimum,
+    Math.min(
+      maximum,
+      value
+    )
+  );
 
 }
 
 
-/* DESKTOP WHEEL */
+function applyOrbZoom(){
+
+  orb.style.transform =
+    "scale(" +
+    zoom +
+    ")";
+
+}
+
+
+/* =========================================================
+   DESKTOP WHEEL ZOOM
+========================================================= */
 
 orb.addEventListener(
   "wheel",
-  e=>{
-  e.preventDefault();
+  event=>{
 
-  zoom += e.deltaY < 0 ? 0.1 : -0.1;
+    event.preventDefault();
 
-  zoom = Math.max(
-    MIN_ZOOM,
-    Math.min(MAX_ZOOM, zoom)
-  );
+    const direction =
+      event.deltaY < 0
+        ? 0.1
+        : -0.1;
 
-  applyZoom();
+    zoom =
+      clamp(
+        zoom + direction,
+        MIN_ZOOM,
+        MAX_ZOOM
+      );
 
-},
-{
-  passive:false
-});
+    applyOrbZoom();
+
+  },
+  {
+    passive:false
+  }
+);
 
 
 /* =========================================================
    MOBILE PINCH ZOOM
 ========================================================= */
 
-let pinchStartDistance = 0;
-let pinchStartZoom = 1;
+let pinchStartDistance =
+  0;
+
+let pinchStartZoom =
+  1;
 
 
-function getPinchDistance(touches){
+function getTouchDistance(
+  touches
+){
 
-  if(!touches || touches.length < 2){
+  if(
+    !touches ||
+    touches.length < 2
+  ){
+
     return 0;
+
   }
 
   const dx =
@@ -1394,20 +1638,30 @@ function getPinchDistance(touches){
     touches[0].clientY -
     touches[1].clientY;
 
-  return Math.hypot(dx,dy);
+  return Math.hypot(
+    dx,
+    dy
+  );
+
 }
 
 
 orb.addEventListener(
   "touchstart",
-  e=>{
+  event=>{
 
-    if(e.touches.length !== 2){
+    if(
+      event.touches.length !== 2
+    ){
+
       return;
+
     }
 
     pinchStartDistance =
-      getPinchDistance(e.touches);
+      getTouchDistance(
+        event.touches
+      );
 
     pinchStartZoom =
       zoom;
@@ -1421,37 +1675,45 @@ orb.addEventListener(
 
 orb.addEventListener(
   "touchmove",
-  e=>{
+  event=>{
 
     if(
-      e.touches.length !== 2 ||
-      !pinchStartDistance
+      event.touches.length !== 2 ||
+      pinchStartDistance <= 0
     ){
+
       return;
+
     }
 
-    e.preventDefault();
+    event.preventDefault();
 
-    const currentDistance =
-      getPinchDistance(e.touches);
+    const distance =
+      getTouchDistance(
+        event.touches
+      );
 
-    if(!currentDistance){
+    if(!distance){
+
       return;
+
     }
 
     zoom =
       pinchStartZoom *
       (
-        currentDistance /
+        distance /
         pinchStartDistance
       );
 
-    zoom = Math.max(
-      MIN_ZOOM,
-      Math.min(MAX_ZOOM,zoom)
-    );
+    zoom =
+      clamp(
+        zoom,
+        MIN_ZOOM,
+        MAX_ZOOM
+      );
 
-    applyZoom();
+    applyOrbZoom();
 
   },
   {
@@ -1462,13 +1724,15 @@ orb.addEventListener(
 
 orb.addEventListener(
   "touchend",
-  e=>{
+  event=>{
 
     if(
-      !e.touches ||
-      e.touches.length < 2
+      event.touches.length < 2
     ){
-      pinchStartDistance = 0;
+
+      pinchStartDistance =
+        0;
+
     }
 
   },
@@ -1481,10 +1745,755 @@ orb.addEventListener(
 orb.addEventListener(
   "touchcancel",
   ()=>{
-    pinchStartDistance = 0;
+
+    pinchStartDistance =
+      0;
+
   },
   {
     passive:true
+  }
+);
+
+
+/* =========================================================
+   MIC VISUAL
+========================================================= */
+
+function setMicVisual(
+  on
+){
+
+  const active =
+    Boolean(on);
+
+  mic.classList.toggle(
+    "on",
+    active
+  );
+
+  mic.setAttribute(
+    "aria-pressed",
+    String(active)
+  );
+
+}
+
+
+/* =========================================================
+   MIC DRAG
+   TAP AND DRAG ARE KEPT SEPARATE
+========================================================= */
+
+let micPointer =
+  null;
+
+let micMoved =
+  false;
+
+
+mic.addEventListener(
+  "pointerdown",
+  event=>{
+
+    event.preventDefault();
+
+    micPointer = {
+
+      id:
+        event.pointerId,
+
+      startX:
+        event.clientX,
+
+      startY:
+        event.clientY,
+
+      startRight:
+        parseFloat(
+          getComputedStyle(
+            mic
+          ).right
+        ) || 28,
+
+      startBottom:
+        parseFloat(
+          getComputedStyle(
+            mic
+          ).bottom
+        ) || 28
+
+    };
+
+    micMoved =
+      false;
+
+    try{
+
+      mic.setPointerCapture(
+        event.pointerId
+      );
+
+    }catch(error){}
+
+  }
+);
+
+
+mic.addEventListener(
+  "pointermove",
+  event=>{
+
+    if(
+      !micPointer ||
+      event.pointerId !==
+      micPointer.id
+    ){
+
+      return;
+
+    }
+
+    const dx =
+      event.clientX -
+      micPointer.startX;
+
+    const dy =
+      event.clientY -
+      micPointer.startY;
+
+    if(
+      Math.hypot(dx,dy) <= 8
+    ){
+
+      return;
+
+    }
+
+    micMoved =
+      true;
+
+    mic.classList.add(
+      "dragging"
+    );
+
+
+    const maxRight =
+      Math.max(
+        8,
+        window.innerWidth -
+        mic.offsetWidth -
+        8
+      );
+
+
+    const maxBottom =
+      Math.max(
+        8,
+        window.innerHeight -
+        mic.offsetHeight -
+        8
+      );
+
+
+    const newRight =
+      clamp(
+        micPointer.startRight -
+        dx,
+        8,
+        maxRight
+      );
+
+
+    const newBottom =
+      clamp(
+        micPointer.startBottom -
+        dy,
+        8,
+        maxBottom
+      );
+
+
+    mic.style.right =
+      newRight + "px";
+
+    mic.style.bottom =
+      newBottom + "px";
+
+  }
+);
+
+
+mic.addEventListener(
+  "pointerup",
+  event=>{
+
+    if(
+      !micPointer ||
+      event.pointerId !==
+      micPointer.id
+    ){
+
+      return;
+
+    }
+
+    try{
+
+      mic.releasePointerCapture(
+        event.pointerId
+      );
+
+    }catch(error){}
+
+
+    mic.classList.remove(
+      "dragging"
+    );
+
+
+    const wasMoved =
+      micMoved;
+
+
+    micPointer =
+      null;
+
+    micMoved =
+      false;
+
+
+    if(
+      wasMoved
+    ){
+
+      return;
+
+    }
+
+
+    toggleListening();
+
+  }
+);
+
+
+mic.addEventListener(
+  "pointercancel",
+  event=>{
+
+    if(
+      micPointer &&
+      event.pointerId ===
+      micPointer.id
+    ){
+
+      try{
+
+        mic.releasePointerCapture(
+          event.pointerId
+        );
+
+      }catch(error){}
+
+    }
+
+
+    micPointer =
+      null;
+
+    micMoved =
+      false;
+
+    mic.classList.remove(
+      "dragging"
+    );
+
+  }
+);
+
+
+/* =========================================================
+   CHAT BOX POSITION
+========================================================= */
+
+let chatX =
+  0;
+
+let chatY =
+  0;
+
+let chatPositioned =
+  false;
+
+
+function applyChatPosition(){
+
+  chatBox.style.transform =
+    "translate3d(" +
+    chatX +
+    "px," +
+    chatY +
+    "px,0) scale(" +
+    chatZoom +
+    ")";
+
+}
+
+
+function centerChat(){
+
+  chatX =
+    0;
+
+  chatY =
+    0;
+
+  chatPositioned =
+    true;
+
+  applyChatPosition();
+
+}
+
+
+/* =========================================================
+   CHAT BOX ZOOM
+========================================================= */
+
+let chatZoom =
+  1;
+
+const CHAT_MIN_ZOOM =
+  0.65;
+
+const CHAT_MAX_ZOOM =
+  1.5;
+
+const CHAT_ZOOM_STEP =
+  0.1;
+
+
+function applyChatZoom(){
+
+  chatZoom =
+    clamp(
+      chatZoom,
+      CHAT_MIN_ZOOM,
+      CHAT_MAX_ZOOM
+    );
+
+  applyChatPosition();
+
+}
+
+
+function changeChatZoom(
+  amount
+){
+
+  chatZoom =
+    clamp(
+      chatZoom + amount,
+      CHAT_MIN_ZOOM,
+      CHAT_MAX_ZOOM
+    );
+
+  applyChatZoom();
+
+}
+
+
+chatZoomIn.addEventListener(
+  "click",
+  event=>{
+
+    event.stopPropagation();
+
+    changeChatZoom(
+      CHAT_ZOOM_STEP
+    );
+
+  }
+);
+
+
+chatZoomOut.addEventListener(
+  "click",
+  event=>{
+
+    event.stopPropagation();
+
+    changeChatZoom(
+      -CHAT_ZOOM_STEP
+    );
+
+  }
+);
+
+
+chatZoomReset.addEventListener(
+  "click",
+  event=>{
+
+    event.stopPropagation();
+
+    chatZoom =
+      1;
+
+    chatX =
+      0;
+
+    chatY =
+      0;
+
+    applyChatPosition();
+
+  }
+);
+
+
+/* =========================================================
+   CHAT BOX DRAG
+   ONLY HEADER DRAGS
+========================================================= */
+
+let chatDrag =
+  null;
+
+
+chatHeader.addEventListener(
+  "pointerdown",
+  event=>{
+
+    if(
+      event.target.closest(
+        "button"
+      )
+    ){
+
+      return;
+
+    }
+
+
+    event.preventDefault();
+
+
+    chatDrag = {
+
+      id:
+        event.pointerId,
+
+      startX:
+        event.clientX,
+
+      startY:
+        event.clientY,
+
+      originalX:
+        chatX,
+
+      originalY:
+        chatY
+
+    };
+
+
+    chatHeader.classList.add(
+      "dragging"
+    );
+
+
+    try{
+
+      chatHeader.setPointerCapture(
+        event.pointerId
+      );
+
+    }catch(error){}
+
+  }
+);
+
+
+chatHeader.addEventListener(
+  "pointermove",
+  event=>{
+
+    if(
+      !chatDrag ||
+      event.pointerId !==
+      chatDrag.id
+    ){
+
+      return;
+
+    }
+
+
+    const dx =
+      event.clientX -
+      chatDrag.startX;
+
+    const dy =
+      event.clientY -
+      chatDrag.startY;
+
+
+    chatX =
+      chatDrag.originalX +
+      dx;
+
+    chatY =
+      chatDrag.originalY +
+      dy;
+
+
+    applyChatPosition();
+
+  }
+);
+
+
+chatHeader.addEventListener(
+  "pointerup",
+  event=>{
+
+    if(
+      !chatDrag ||
+      event.pointerId !==
+      chatDrag.id
+    ){
+
+      return;
+
+    }
+
+
+    try{
+
+      chatHeader.releasePointerCapture(
+        event.pointerId
+      );
+
+    }catch(error){}
+
+
+    chatHeader.classList.remove(
+      "dragging"
+    );
+
+
+    chatDrag =
+      null;
+
+  }
+);
+
+
+chatHeader.addEventListener(
+  "pointercancel",
+  event=>{
+
+    if(
+      chatDrag &&
+      event.pointerId ===
+      chatDrag.id
+    ){
+
+      try{
+
+        chatHeader.releasePointerCapture(
+          event.pointerId
+        );
+
+      }catch(error){}
+
+    }
+
+
+    chatHeader.classList.remove(
+      "dragging"
+    );
+
+
+    chatDrag =
+      null;
+
+  }
+);
+
+
+/* =========================================================
+   CHAT OPEN
+========================================================= */
+
+function openChat(){
+
+  chatOverlay.classList.add(
+    "open"
+  );
+
+
+  if(!chatPositioned){
+
+    centerChat();
+
+  }else{
+
+    applyChatPosition();
+
+  }
+
+
+  renderHistory();
+
+
+  window.setTimeout(
+    ()=>{
+
+      try{
+
+        chatInput.focus();
+
+      }catch(error){}
+
+    },
+    180
+  );
+
+}
+
+
+/* =========================================================
+   CHAT CLOSE
+========================================================= */
+
+function closeChatPopup(){
+
+  chatOverlay.classList.remove(
+    "open"
+  );
+
+}
+
+
+/* =========================================================
+   DOUBLE TAP ORB
+========================================================= */
+
+let lastOrbTap =
+  0;
+
+let orbTapTimer =
+  null;
+
+
+orb.addEventListener(
+  "click",
+  event=>{
+
+    const now =
+      Date.now();
+
+
+    if(
+      now - lastOrbTap < 380
+    ){
+
+      if(
+        orbTapTimer
+      ){
+
+        clearTimeout(
+          orbTapTimer
+        );
+
+        orbTapTimer =
+          null;
+
+      }
+
+
+      lastOrbTap =
+        0;
+
+      openChat();
+
+      return;
+
+    }
+
+
+    lastOrbTap =
+      now;
+
+
+    if(
+      orbTapTimer
+    ){
+
+      clearTimeout(
+        orbTapTimer
+      );
+
+    }
+
+
+    orbTapTimer =
+      setTimeout(
+        ()=>{
+
+          lastOrbTap =
+            0;
+
+          orbTapTimer =
+            null;
+
+        },
+        400
+      );
+
+  }
+);
+
+
+/* =========================================================
+   CHAT OVERLAY CLICK
+========================================================= */
+
+chatOverlay.addEventListener(
+  "click",
+  event=>{
+
+    if(
+      event.target ===
+      chatOverlay
+    ){
+
+      closeChatPopup();
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   CLOSE CHAT BUTTON
+========================================================= */
+
+closeChat.addEventListener(
+  "click",
+  event=>{
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+    closeChatPopup();
+
   }
 );
 
@@ -1496,21 +2505,35 @@ orb.addEventListener(
 const STORAGE_KEY =
   "NOA_CHAT_HISTORY_V1";
 
-let history = [];
+let history =
+  [];
 
 
 try{
 
   const stored =
-    localStorage.getItem(STORAGE_KEY);
+    localStorage.getItem(
+      STORAGE_KEY
+    );
 
-  history =
-    stored
-      ? JSON.parse(stored)
-      : [];
 
-  if(!Array.isArray(history)){
-    history = [];
+  if(stored){
+
+    const parsed =
+      JSON.parse(
+        stored
+      );
+
+
+    if(
+      Array.isArray(parsed)
+    ){
+
+      history =
+        parsed;
+
+    }
+
   }
 
 }catch(error){
@@ -1520,7 +2543,8 @@ try{
     error
   );
 
-  history = [];
+  history =
+    [];
 
 }
 
@@ -1535,7 +2559,9 @@ function saveHistory(){
 
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify(history)
+      JSON.stringify(
+        history
+      )
     );
 
   }catch(error){
@@ -1556,47 +2582,72 @@ function saveHistory(){
 
 function renderHistory(){
 
-  chatHistory.innerHTML = "";
+  chatHistory.innerHTML =
+    "";
 
-  history.forEach(item=>{
 
-    const bubble =
-      document.createElement("div");
+  history.forEach(
+    item=>{
 
-    bubble.className =
-      "message " +
-      (
+      const bubble =
+        document.createElement(
+          "div"
+        );
+
+
+      bubble.className =
+        "message " +
+        (
+          item.role === "user"
+            ? "user"
+            : "noa"
+        );
+
+
+      const label =
+        document.createElement(
+          "span"
+        );
+
+
+      label.className =
+        "messageLabel";
+
+
+      label.textContent =
         item.role === "user"
-          ? "user"
-          : "noa"
+          ? "YOU"
+          : "NOA";
+
+
+      const content =
+        document.createElement(
+          "span"
+        );
+
+
+      content.textContent =
+        String(
+          item.text || ""
+        );
+
+
+      bubble.appendChild(
+        label
       );
 
 
-    const label =
-      document.createElement("span");
-
-    label.className =
-      "messageLabel";
-
-    label.textContent =
-      item.role === "user"
-        ? "YOU"
-        : "NOA";
+      bubble.appendChild(
+        content
+      );
 
 
-    const content =
-      document.createElement("span");
+      chatHistory.appendChild(
+        bubble
+      );
 
-    content.textContent =
-      item.text;
-
-
-    bubble.appendChild(label);
-    bubble.appendChild(content);
-
-    chatHistory.appendChild(bubble);
-
-  });
+    }
+  );
 
 
   chatHistory.scrollTop =
@@ -1609,21 +2660,32 @@ function renderHistory(){
    ADD HISTORY
 ========================================================= */
 
-function addHistory(role,text){
+function addHistory(
+  role,
+  text
+){
 
   history.push({
 
-    role:role,
+    role:
+      role === "user"
+        ? "user"
+        : "noa",
 
-    text:String(text)
+    text:
+      String(text)
 
   });
 
 
-  if(history.length > 100){
+  if(
+    history.length > 100
+  ){
 
     history =
-      history.slice(-100);
+      history.slice(
+        -100
+      );
 
   }
 
@@ -1636,126 +2698,46 @@ function addHistory(role,text){
 
 
 /* =========================================================
-   CHAT OPEN
-========================================================= */
-
-function openChat(){
-
-  chatOverlay.classList.add(
-    "open"
-  );
-
-  renderHistory();
-
-
-  setTimeout(
-    ()=>{
-      chatInput.focus();
-    },
-    150
-  );
-
-}
-
-
-/* =========================================================
-   CHAT CLOSE
-========================================================= */
-
-function closeChatPopup(){
-
-  chatOverlay.classList.remove(
-    "open"
-  );
-
-}
-
-
-closeChat.addEventListener(
-  "click",
-  e=>{
-
-    e.stopPropagation();
-
-    closeChatPopup();
-
-  }
-);
-
-
-chatOverlay.addEventListener(
-  "click",
-  e=>{
-
-    if(e.target === chatOverlay){
-
-      closeChatPopup();
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   CLEAR CHAT
+   CLEAR HISTORY
 ========================================================= */
 
 clearChat.addEventListener(
   "click",
-  e=>{
+  event=>{
 
-    e.stopPropagation();
+    event.preventDefault();
 
-    if(!history.length){
-      return;
-    }
+    event.stopPropagation();
 
 
     if(
-      !window.confirm(
-        "Clear NOA chat history?"
-      )
+      !history.length
     ){
+
       return;
+
     }
 
 
-    history = [];
+    const confirmed =
+      window.confirm(
+        "Clear NOA chat history?"
+      );
+
+
+    if(!confirmed){
+
+      return;
+
+    }
+
+
+    history =
+      [];
 
     saveHistory();
 
     renderHistory();
-
-  }
-);
-
-
-/* =========================================================
-   DOUBLE TAP ORB
-========================================================= */
-
-let lastOrbTap = 0;
-
-
-orb.addEventListener(
-  "click",
-  ()=>{
-
-    const now =
-      Date.now();
-
-
-    if(
-      now - lastOrbTap < 380
-    ){
-
-      openChat();
-
-    }
-
-
-    lastOrbTap = now;
 
   }
 );
@@ -1769,40 +2751,14 @@ const SpeechRecognition =
   window.SpeechRecognition ||
   window.webkitSpeechRecognition;
 
-let recognition = null;
 
-let listening = false;
-
-
-/* =========================================================
-   MIC VISUAL
-========================================================= */
-
-function setMicVisual(on){
-
-  const active =
-    Boolean(on);
+let recognition =
+  null;
 
 
-  mic.classList.toggle(
-    "on",
-    active
-  );
-
-
-  mic.setAttribute(
-    "aria-pressed",
-    String(active)
-  );
-
-}
-
-
-/* =========================================================
-   SPEECH SETUP
-========================================================= */
-
-if(SpeechRecognition){
+if(
+  SpeechRecognition
+){
 
   recognition =
     new SpeechRecognition();
@@ -1827,37 +2783,47 @@ if(SpeechRecognition){
   recognition.onstart =
     ()=>{
 
-      listening = true;
+      listening =
+        true;
 
-      setMicVisual(true);
+      setMicVisual(
+        true
+      );
 
       setState(
-        "LISTENING"
+        "listening"
       );
 
     };
 
 
   recognition.onresult =
-    e=>{
+    event=>{
 
-      let finalText = "";
-      let interimText = "";
+      let finalText =
+        "";
+
+      let interimText =
+        "";
 
 
       for(
-        let i = e.resultIndex;
-        i < e.results.length;
+        let i =
+          event.resultIndex;
+
+        i <
+          event.results.length;
+
         i++
       ){
 
         const transcript =
-          e.results[i][0]
+          event.results[i][0]
             .transcript;
 
 
         if(
-          e.results[i].isFinal
+          event.results[i].isFinal
         ){
 
           finalText +=
@@ -1880,7 +2846,9 @@ if(SpeechRecognition){
         ).trim();
 
 
-      if(visibleText){
+      if(
+        visibleText
+      ){
 
         spokenText.textContent =
           visibleText;
@@ -1888,22 +2856,21 @@ if(SpeechRecognition){
       }
 
 
-      if(finalText.trim()){
+      if(
+        finalText.trim()
+      ){
 
-        const text =
+        const message =
           finalText.trim();
-
-
-        setState(
-          "THINKING"
-        );
 
 
         spokenText.textContent =
           "";
 
 
-        ask(text);
+        ask(
+          message
+        );
 
       }
 
@@ -1911,23 +2878,29 @@ if(SpeechRecognition){
 
 
   recognition.onerror =
-    e=>{
+    event=>{
 
       console.warn(
-        "Speech recognition error:",
-        e.error
+        "NOA speech error:",
+        event.error
       );
 
 
-      listening = false;
+      listening =
+        false;
 
-      setMicVisual(false);
+
+      setMicVisual(
+        false
+      );
+
 
       spokenText.textContent =
         "";
 
+
       setState(
-        "IDLE"
+        "idle"
       );
 
     };
@@ -1936,9 +2909,13 @@ if(SpeechRecognition){
   recognition.onend =
     ()=>{
 
-      listening = false;
+      listening =
+        false;
 
-      setMicVisual(false);
+
+      setMicVisual(
+        false
+      );
 
 
       if(
@@ -1947,33 +2924,14 @@ if(SpeechRecognition){
       ){
 
         setState(
-          "IDLE"
+          "idle"
         );
 
       }
 
     };
 
-}else{
-
-  console.warn(
-    "SpeechRecognition is not supported in this browser."
-  );
-
 }
-
-
-/* =========================================================
-   MIC BUTTON
-   FIXED — NO DRAG
-========================================================= */
-
-mic.addEventListener(
-  "click",
-  ()=>{
-    toggleListening();
-  }
-);
 
 
 /* =========================================================
@@ -1982,7 +2940,9 @@ mic.addEventListener(
 
 function toggleListening(){
 
-  if(!recognition){
+  if(
+    !recognition
+  ){
 
     window.alert(
       "Speech recognition is not supported in this browser."
@@ -1993,32 +2953,30 @@ function toggleListening(){
   }
 
 
-  if(listening){
+  if(
+    listening
+  ){
 
     try{
 
       recognition.stop();
 
-    }catch(error){
-
-      console.warn(
-        "Recognition stop failed:",
-        error
-      );
-
-    }
+    }catch(error){}
 
 
-    listening = false;
+    listening =
+      false;
 
-    setMicVisual(false);
 
-    spokenText.textContent =
-      "";
+    setMicVisual(
+      false
+    );
+
 
     setState(
-      "IDLE"
+      "idle"
     );
+
 
     return;
 
@@ -2036,7 +2994,7 @@ function toggleListening(){
   }catch(error){
 
     console.warn(
-      "Recognition start failed:",
+      "NOA recognition start failed:",
       error
     );
 
@@ -2046,413 +3004,1837 @@ function toggleListening(){
 
 
 /* =========================================================
-   CHAT REQUEST
+   PART 2 END
+   PART 3 CONTINUES DIRECTLY BELOW
 ========================================================= */
 
-async function ask(text){
 
-  const message =
-    String(text || "").trim();
-
-
-  if(!message){
-    return;
-  }
-
-
-  addHistory(
-    "user",
-    message
-  );
-
-
-  setState(
-    "THINKING"
-  );
-
-
-  try{
-
-    const response =
-      await fetch(
-        NOA_WORKER,
-        {
-          method:"POST",
-
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-
-              message:message,
-
-              history:
-                history
-                  .slice(-20)
-                  .map(
-                    item=>({
-
-                      role:
-                        item.role === "user"
-                          ? "user"
-                          : "assistant",
-
-                      content:
-                        item.text
-
-                    })
-                  )
-
-            })
-        }
-      );
-
-
-    if(!response.ok){
-
-      throw new Error(
-        "HTTP " +
-        response.status
-      );
-
-    }
-
-
-    const data =
-      await response.json();
-
-
-    const reply =
-      extractReply(data);
-
-
-    if(!reply){
-
-      throw new Error(
-        "Empty NOA response"
-      );
-
-    }
-
-
-    addHistory(
-      "noa",
-      reply
-    );
-
-
-    speakReply(
-      reply
-    );
-
-
-  }catch(error){
-
-    console.error(
-      "NOA request failed:",
-      error
-    );
-
-
-    const fallback =
-      "NOA connection error. Please try again.";
-
-
-    addHistory(
-      "noa",
-      fallback
-    );
-
-
-    spokenText.textContent =
-      "";
-
-
-    setState(
-      "IDLE"
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   RESPONSE PARSER
-========================================================= */
-
-function extractReply(data){
-
-  if(!data){
-    return "";
-  }
-
-
-  if(typeof data === "string"){
-    return data.trim();
-  }
-
-
-  const candidates = [
-
-    data.reply,
-    data.response,
-    data.message,
-    data.text,
-    data.content,
-    data.answer,
-    data.output,
-    data.result
-
-  ];
-
-
-  for(
-    const value of candidates
-  ){
-
-    if(
-      typeof value === "string" &&
-      value.trim()
-    ){
-
-      return value.trim();
-
-    }
-
-  }
-
+/* PART 3 STARTS HERE */
+    /* ============================================================
+   PART 3 STARTS HERE
+   NOA CORE COMPLETION
+   - Chat popup drag
+   - Chat popup resize
+   - Chat popup zoom in/out
+   - Popup state management
+   - Multiple popup support
+   - Task engine
+   - Command bridge
+   - Safe completion
+   ============================================================ */
+
+
+/* ============================================================
+   CHAT POPUP — DRAG + RESIZE + ZOOM
+============================================================ */
+
+(function initChatWindow(){
 
   if(
-    data.choices &&
-    Array.isArray(data.choices) &&
-    data.choices[0]
+    !chatOverlay ||
+    !chatBox ||
+    !chatHeader
   ){
-
-    const choice =
-      data.choices[0];
-
-
-    if(
-      choice.message &&
-      typeof choice.message.content ===
-      "string"
-    ){
-
-      return choice.message.content.trim();
-
-    }
-
-
-    if(
-      typeof choice.text ===
-      "string"
-    ){
-
-      return choice.text.trim();
-
-    }
-
-  }
-
-
-  return "";
-
-}
-
-
-/* =========================================================
-   SPEECH SYNTHESIS
-========================================================= */
-
-function speakReply(text){
-
-  if(
-    !("speechSynthesis" in window)
-  ){
-
-    setState(
-      "COMPLETE"
-    );
-
-
-    setTimeout(
-      ()=>{
-        setState(
-          "IDLE"
-        );
-      },
-      700
-    );
-
-
-    return;
-
-  }
-
-
-  try{
-
-    window.speechSynthesis.cancel();
-
-  }catch(error){
-
     console.warn(
-      "Speech cancel failed:",
-      error
+      "NOA: Chat window elements not found."
     );
+    return;
+  }
+
+  let chatDragging = false;
+  let chatResizing = false;
+
+  let dragPointerId = null;
+
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+
+  let resizeStartX = 0;
+  let resizeStartY = 0;
+
+  let resizeStartWidth = 0;
+  let resizeStartHeight = 0;
+
+  let chatScale = 1;
+
+  const MIN_CHAT_SCALE = 0.70;
+  const MAX_CHAT_SCALE = 1.60;
+
+  const MIN_CHAT_WIDTH = 280;
+  const MIN_CHAT_HEIGHT = 300;
+
+  const MAX_CHAT_WIDTH = Math.max(
+    320,
+    window.innerWidth - 20
+  );
+
+  const MAX_CHAT_HEIGHT = Math.max(
+    320,
+    window.innerHeight - 20
+  );
+
+
+  /* ----------------------------------------------------------
+     CHAT BOX STYLE
+  ---------------------------------------------------------- */
+
+  chatBox.style.position = "relative";
+  chatBox.style.transformOrigin = "center center";
+
+
+  /* ----------------------------------------------------------
+     RESIZE HANDLE
+  ---------------------------------------------------------- */
+
+  let resizeHandle =
+    chatBox.querySelector(
+      ".noa-chat-resize-handle"
+    );
+
+  if(!resizeHandle){
+
+    resizeHandle =
+      document.createElement("div");
+
+    resizeHandle.className =
+      "noa-chat-resize-handle";
+
+    resizeHandle.setAttribute(
+      "aria-label",
+      "Resize chat"
+    );
+
+    chatBox.appendChild(
+      resizeHandle
+    );
+  }
+
+
+  /* ----------------------------------------------------------
+     RESIZE HANDLE STYLE
+  ---------------------------------------------------------- */
+
+  const resizeStyle =
+    document.createElement("style");
+
+  resizeStyle.textContent = `
+    .noa-chat-resize-handle{
+      position:absolute;
+      right:3px;
+      bottom:3px;
+      width:24px;
+      height:24px;
+      z-index:20;
+      cursor:nwse-resize;
+      touch-action:none;
+      border-radius:0 0 16px 0;
+    }
+
+    .noa-chat-resize-handle::before{
+      content:"";
+      position:absolute;
+      right:4px;
+      bottom:5px;
+      width:11px;
+      height:11px;
+      border-right:2px solid rgba(125,189,255,.65);
+      border-bottom:2px solid rgba(125,189,255,.65);
+      opacity:.8;
+    }
+
+    .noa-chat-resize-handle::after{
+      content:"";
+      position:absolute;
+      right:8px;
+      bottom:9px;
+      width:7px;
+      height:7px;
+      border-right:1px solid rgba(125,189,255,.45);
+      border-bottom:1px solid rgba(125,189,255,.45);
+    }
+
+    #chatBox.noa-window-dragging{
+      transition:none !important;
+      user-select:none !important;
+    }
+
+    #chatBox.noa-window-resizing{
+      transition:none !important;
+      user-select:none !important;
+    }
+  `;
+
+  document.head.appendChild(
+    resizeStyle
+  );
+
+
+  /* ----------------------------------------------------------
+     APPLY CHAT SCALE
+  ---------------------------------------------------------- */
+
+  function applyChatScale(){
+
+    chatBox.style.transform =
+      "scale(" +
+      chatScale +
+      ")";
 
   }
 
 
-  const utterance =
-    new SpeechSynthesisUtterance(
-      text
+  /* ----------------------------------------------------------
+     DRAG START
+  ---------------------------------------------------------- */
+
+  chatHeader.addEventListener(
+    "pointerdown",
+    event=>{
+
+      if(
+        event.target.closest(
+          "button"
+        )
+      ){
+        return;
+      }
+
+      if(
+        event.pointerType ===
+        "mouse" &&
+        event.button !== 0
+      ){
+        return;
+      }
+
+      chatDragging = true;
+      dragPointerId =
+        event.pointerId;
+
+      const rect =
+        chatBox.getBoundingClientRect();
+
+      dragOffsetX =
+        event.clientX -
+        rect.left;
+
+      dragOffsetY =
+        event.clientY -
+        rect.top;
+
+      chatBox.classList.add(
+        "noa-window-dragging"
+      );
+
+      chatHeader.setPointerCapture(
+        dragPointerId
+      );
+
+      event.preventDefault();
+
+    }
+  );
+
+
+  /* ----------------------------------------------------------
+     DRAG MOVE
+  ---------------------------------------------------------- */
+
+  chatHeader.addEventListener(
+    "pointermove",
+    event=>{
+
+      if(
+        !chatDragging ||
+        event.pointerId !==
+        dragPointerId
+      ){
+        return;
+      }
+
+      const rect =
+        chatBox.getBoundingClientRect();
+
+      let left =
+        event.clientX -
+        dragOffsetX;
+
+      let top =
+        event.clientY -
+        dragOffsetY;
+
+
+      const width =
+        rect.width;
+
+      const height =
+        rect.height;
+
+
+      const margin = 8;
+
+
+      left =
+        Math.max(
+          margin,
+          Math.min(
+            window.innerWidth -
+            width -
+            margin,
+            left
+          )
+        );
+
+
+      top =
+        Math.max(
+          margin,
+          Math.min(
+            window.innerHeight -
+            height -
+            margin,
+            top
+          )
+        );
+
+
+      chatBox.style.position =
+        "fixed";
+
+      chatBox.style.left =
+        left + "px";
+
+      chatBox.style.top =
+        top + "px";
+
+      chatBox.style.margin =
+        "0";
+
+      chatBox.style.transform =
+        "scale(" +
+        chatScale +
+        ")";
+
+    }
+  );
+
+
+  /* ----------------------------------------------------------
+     DRAG END
+  ---------------------------------------------------------- */
+
+  function stopChatDrag(event){
+
+    if(
+      !chatDragging ||
+      (
+        event &&
+        event.pointerId !==
+        dragPointerId
+      )
+    ){
+      return;
+    }
+
+    chatDragging = false;
+
+    chatBox.classList.remove(
+      "noa-window-dragging"
     );
 
+    try{
 
-  utterance.lang =
-    "en-IN";
+      if(
+        chatHeader.hasPointerCapture(
+          dragPointerId
+        )
+      ){
 
-  utterance.rate =
-    .96;
+        chatHeader.releasePointerCapture(
+          dragPointerId
+        );
 
-  utterance.pitch =
-    1;
+      }
 
-  utterance.volume =
-    1;
+    }catch(_){}
+
+    dragPointerId = null;
+
+  }
 
 
-  utterance.onstart =
-    ()=>{
+  chatHeader.addEventListener(
+    "pointerup",
+    stopChatDrag
+  );
 
-      setState(
-        "SPEAKING"
+  chatHeader.addEventListener(
+    "pointercancel",
+    stopChatDrag
+  );
+
+
+  /* ----------------------------------------------------------
+     RESIZE START
+  ---------------------------------------------------------- */
+
+  resizeHandle.addEventListener(
+    "pointerdown",
+    event=>{
+
+      if(
+        event.pointerType ===
+        "mouse" &&
+        event.button !== 0
+      ){
+        return;
+      }
+
+      chatResizing = true;
+
+      dragPointerId =
+        event.pointerId;
+
+      const rect =
+        chatBox.getBoundingClientRect();
+
+      resizeStartX =
+        event.clientX;
+
+      resizeStartY =
+        event.clientY;
+
+      resizeStartWidth =
+        rect.width;
+
+      resizeStartHeight =
+        rect.height;
+
+      chatBox.classList.add(
+        "noa-window-resizing"
       );
 
-      spokenText.textContent =
-        text;
-
-    };
-
-
-  utterance.onend =
-    ()=>{
-
-      spokenText.textContent =
-        "";
-
-      setState(
-        "COMPLETE"
+      resizeHandle.setPointerCapture(
+        dragPointerId
       );
 
+      event.preventDefault();
+      event.stopPropagation();
+
+    }
+  );
+
+
+  /* ----------------------------------------------------------
+     RESIZE MOVE
+  ---------------------------------------------------------- */
+
+  resizeHandle.addEventListener(
+    "pointermove",
+    event=>{
+
+      if(
+        !chatResizing ||
+        event.pointerId !==
+        dragPointerId
+      ){
+        return;
+      }
+
+      const dx =
+        event.clientX -
+        resizeStartX;
+
+      const dy =
+        event.clientY -
+        resizeStartY;
+
+
+      const newWidth =
+        Math.max(
+          MIN_CHAT_WIDTH,
+          Math.min(
+            MAX_CHAT_WIDTH,
+            resizeStartWidth + dx
+          )
+        );
+
+
+      const newHeight =
+        Math.max(
+          MIN_CHAT_HEIGHT,
+          Math.min(
+            MAX_CHAT_HEIGHT,
+            resizeStartHeight + dy
+          )
+        );
+
+
+      chatBox.style.width =
+        newWidth + "px";
+
+      chatBox.style.height =
+        newHeight + "px";
+
+    }
+  );
+
+
+  /* ----------------------------------------------------------
+     RESIZE END
+  ---------------------------------------------------------- */
+
+  function stopChatResize(event){
+
+    if(
+      !chatResizing ||
+      (
+        event &&
+        event.pointerId !==
+        dragPointerId
+      )
+    ){
+      return;
+    }
+
+    chatResizing = false;
+
+    chatBox.classList.remove(
+      "noa-window-resizing"
+    );
+
+    try{
+
+      if(
+        resizeHandle.hasPointerCapture(
+          dragPointerId
+        )
+      ){
+
+        resizeHandle.releasePointerCapture(
+          dragPointerId
+        );
+
+      }
+
+    }catch(_){}
+
+    dragPointerId = null;
+
+  }
+
+
+  resizeHandle.addEventListener(
+    "pointerup",
+    stopChatResize
+  );
+
+  resizeHandle.addEventListener(
+    "pointercancel",
+    stopChatResize
+  );
+
+
+  /* ----------------------------------------------------------
+     CHAT ZOOM — CTRL/WHEEL
+  ---------------------------------------------------------- */
+
+  chatBox.addEventListener(
+    "wheel",
+    event=>{
+
+      if(!event.ctrlKey){
+        return;
+      }
+
+      event.preventDefault();
+
+      chatScale +=
+        event.deltaY < 0
+          ? 0.05
+          : -0.05;
+
+      chatScale =
+        Math.max(
+          MIN_CHAT_SCALE,
+          Math.min(
+            MAX_CHAT_SCALE,
+            chatScale
+          )
+        );
+
+      applyChatScale();
+
+    },
+    {
+      passive:false
+    }
+  );
+
+
+  /* ----------------------------------------------------------
+     CHAT DOUBLE-TAP ZOOM
+  ---------------------------------------------------------- */
+
+  let lastChatTap = 0;
+
+  chatBox.addEventListener(
+    "pointerup",
+    event=>{
+
+      if(
+        event.target.closest(
+          "button,input"
+        )
+      ){
+        return;
+      }
+
+      const now =
+        Date.now();
+
+      if(
+        now - lastChatTap <
+        300
+      ){
+
+        chatScale =
+          chatScale >= 1.15
+            ? 1
+            : 1.25;
+
+        applyChatScale();
+
+      }
+
+      lastChatTap = now;
+
+    }
+  );
+
+
+  /* ----------------------------------------------------------
+     RESET CHAT WINDOW WHEN OPENED
+  ---------------------------------------------------------- */
+
+  const originalOpenChat =
+    window.NOA &&
+    window.NOA.openChat
+      ? window.NOA.openChat
+      : null;
+
+
+  window.NOA =
+    window.NOA || {};
+
+
+  window.NOA.openChat =
+    function(){
+
+      chatOverlay.classList.add(
+        "open"
+      );
+
+      if(
+        typeof renderHistory ===
+        "function"
+      ){
+
+        renderHistory();
+
+      }
 
       setTimeout(
         ()=>{
-          setState(
-            "IDLE"
-          );
+
+          if(chatInput){
+            chatInput.focus();
+          }
+
         },
-        650
+        120
       );
 
     };
 
 
-  utterance.onerror =
-    e=>{
+})();
 
-      console.warn(
-        "Speech synthesis error:",
-        e
+
+/* ============================================================
+   POPUP MANAGER
+   Allows multiple independent NOA popups.
+============================================================ */
+
+const NOAPopupManager =
+(function(){
+
+  const popups =
+    new Set();
+
+  let popupSequence = 0;
+
+
+  function bringToFront(
+    popup
+  ){
+
+    if(!popup){
+      return;
+    }
+
+    popupSequence++;
+
+    popup.style.zIndex =
+      String(
+        200 + popupSequence
       );
 
-
-      spokenText.textContent =
-        "";
-
-      setState(
-        "IDLE"
-      );
-
-    };
-
-
-  window.speechSynthesis.speak(
-    utterance
-  );
-
-}
-
-
-/* =========================================================
-   CHAT SEND
-========================================================= */
-
-async function sendCurrentMessage(){
-
-  const text =
-    chatInput.value.trim();
-
-
-  if(!text){
-    return;
   }
 
 
-  chatInput.value =
-    "";
+  function makeDraggable(
+    popup,
+    handle
+  ){
+
+    if(
+      !popup ||
+      !handle
+    ){
+      return;
+    }
+
+    let active = false;
+    let pointerId = null;
+
+    let offsetX = 0;
+    let offsetY = 0;
 
 
-  await ask(text);
+    handle.addEventListener(
+      "pointerdown",
+      event=>{
 
-}
+        if(
+          event.target.closest(
+            "button,input,textarea"
+          )
+        ){
+          return;
+        }
+
+        active = true;
+        pointerId =
+          event.pointerId;
+
+        const rect =
+          popup.getBoundingClientRect();
+
+        offsetX =
+          event.clientX -
+          rect.left;
+
+        offsetY =
+          event.clientY -
+          rect.top;
 
 
-sendChat.addEventListener(
-  "click",
-  sendCurrentMessage
-);
+        popup.classList.add(
+          "dragging"
+        );
+
+        bringToFront(
+          popup
+        );
+
+        handle.setPointerCapture(
+          pointerId
+        );
+
+        event.preventDefault();
+
+      }
+    );
 
 
-chatInput.addEventListener(
-  "keydown",
-  e=>{
+    handle.addEventListener(
+      "pointermove",
+      event=>{
 
-    if(e.key === "Enter"){
+        if(
+          !active ||
+          event.pointerId !==
+          pointerId
+        ){
+          return;
+        }
 
-      e.preventDefault();
+        const rect =
+          popup.getBoundingClientRect();
 
-      sendCurrentMessage();
+        let left =
+          event.clientX -
+          offsetX;
+
+        let top =
+          event.clientY -
+          offsetY;
+
+
+        left =
+          Math.max(
+            4,
+            Math.min(
+              window.innerWidth -
+              rect.width -
+              4,
+              left
+            )
+          );
+
+
+        top =
+          Math.max(
+            4,
+            Math.min(
+              window.innerHeight -
+              rect.height -
+              4,
+              top
+            )
+          );
+
+
+        popup.style.left =
+          left + "px";
+
+        popup.style.top =
+          top + "px";
+
+        popup.style.transform =
+          "none";
+
+      }
+    );
+
+
+    function stop(event){
+
+      if(
+        !active ||
+        (
+          event &&
+          event.pointerId !==
+          pointerId
+        )
+      ){
+        return;
+      }
+
+      active = false;
+
+      popup.classList.remove(
+        "dragging"
+      );
+
+      try{
+
+        if(
+          handle.hasPointerCapture(
+            pointerId
+          )
+        ){
+
+          handle.releasePointerCapture(
+            pointerId
+          );
+
+        }
+
+      }catch(_){}
+
+      pointerId = null;
 
     }
 
+
+    handle.addEventListener(
+      "pointerup",
+      stop
+    );
+
+    handle.addEventListener(
+      "pointercancel",
+      stop
+    );
+
   }
-);
 
 
-/* =========================================================
-   INITIALIZE
-========================================================= */
+  function create(
+    title,
+    message
+  ){
 
-renderHistory();
+    const layer =
+      document.getElementById(
+        "popupLayer"
+      );
 
-setState(
-  "IDLE"
-);
-
-applyZoom();
+    if(!layer){
+      return null;
+    }
 
 
-console.log(
-  "NOA // STATE ENGINE 48-1 // LOADED"
-);
+    const popup =
+      document.createElement(
+        "div"
+      );
 
-</script>
+    popup.className =
+      "noa-popup";
 
-</body>
-</html>
+
+    popup.innerHTML = `
+      <div class="noa-popup-head">
+        <div class="noa-popup-title"></div>
+
+        <div class="noa-popup-actions">
+          <button
+            type="button"
+            data-close
+            aria-label="Close">
+            ×
+          </button>
+        </div>
+      </div>
+
+      <div class="noa-popup-body"></div>
+
+      <div class="noa-popup-tools">
+        <button
+          type="button"
+          data-minus>
+          −
+        </button>
+
+        <button
+          type="button"
+          data-plus>
+          +
+        </button>
+      </div>
+    `;
+
+
+    popup.querySelector(
+      ".noa-popup-title"
+    ).textContent =
+      String(
+        title || "NOA"
+      );
+
+
+    popup.querySelector(
+      ".noa-popup-body"
+    ).textContent =
+      String(
+        message || ""
+      );
+
+
+    const head =
+      popup.querySelector(
+        ".noa-popup-head"
+      );
+
+
+    const close =
+      popup.querySelector(
+        "[data-close]"
+      );
+
+
+    const minus =
+      popup.querySelector(
+        "[data-minus]"
+      );
+
+
+    const plus =
+      popup.querySelector(
+        "[data-plus]"
+      );
+
+
+    let scale = 1;
+
+
+    function applyScale(){
+
+      popup.style.transform =
+        "scale(" +
+        scale +
+        ")";
+
+    }
+
+
+    close.addEventListener(
+      "click",
+      ()=>{
+        popups.delete(popup);
+        popup.remove();
+      }
+    );
+
+
+    minus.addEventListener(
+      "click",
+      ()=>{
+        scale =
+          Math.max(
+            .7,
+            scale - .1
+          );
+
+        applyScale();
+      }
+    );
+
+
+    plus.addEventListener(
+      "click",
+      ()=>{
+        scale =
+          Math.min(
+            1.6,
+            scale + .1
+          );
+
+        applyScale();
+      }
+    );
+
+
+    popup.addEventListener(
+      "pointerdown",
+      ()=>{
+        bringToFront(
+          popup
+        );
+      }
+    );
+
+
+    layer.appendChild(
+      popup
+    );
+
+
+    const existing =
+      popups.size;
+
+
+    const offset =
+      Math.min(
+        existing * 24,
+        120
+      );
+
+
+    popup.style.left =
+      `calc(50% + ${offset}px)`;
+
+
+    popup.style.top =
+      `calc(50% + ${offset}px)`;
+
+
+    makeDraggable(
+      popup,
+      head
+    );
+
+
+    popups.add(
+      popup
+    );
+
+
+    bringToFront(
+      popup
+    );
+
+
+    return popup;
+
+  }
+
+
+  function closeAll(){
+
+    popups.forEach(
+      popup=>{
+        popup.remove();
+      }
+    );
+
+    popups.clear();
+
+  }
+
+
+  function list(){
+
+    return [
+      ...popups
+    ];
+
+  }
+
+
+  return {
+    create,
+    closeAll,
+    list,
+    bringToFront
+  };
+
+})();
+
+
+window.NOA =
+  window.NOA || {};
+
+window.NOA.popups =
+  NOAPopupManager;
+
+
+/* ============================================================
+   TEMPORARY RESULT POPUP
+============================================================ */
+
+window.NOA.showTemporaryResult =
+function(
+  title,
+  message,
+  ms = 5000
+){
+
+  const popup =
+    NOAPopupManager.create(
+      title,
+      message
+    );
+
+  if(!popup){
+    return null;
+  }
+
+
+  const duration =
+    Math.max(
+      1000,
+      Math.min(
+        30000,
+        Number(ms) || 5000
+      )
+    );
+
+
+  const timer =
+    setTimeout(
+      ()=>{
+
+        if(
+          popup &&
+          popup.isConnected
+        ){
+
+          popup.remove();
+
+        }
+
+      },
+      duration
+    );
+
+
+  popup.addEventListener(
+    "DOMNodeRemoved",
+    ()=>{
+      clearTimeout(timer);
+    },
+    {
+      once:true
+    }
+  );
+
+
+  return popup;
+
+};
+
+
+/* ============================================================
+   NOA TASK ENGINE
+============================================================ */
+
+const NOATaskEngine =
+(function(){
+
+  const tasks =
+    new Map();
+
+  let sequence = 0;
+
+
+  function createTask(
+    input
+  ){
+
+    const id =
+      "task_" +
+      (++sequence);
+
+
+    const task = {
+
+      id,
+
+      input:
+        String(
+          input || ""
+        ).trim(),
+
+      status:
+        "received",
+
+      risk:
+        "LOW",
+
+      plan:
+        null,
+
+      result:
+        null,
+
+      response:
+        null,
+
+      createdAt:
+        Date.now()
+
+    };
+
+
+    tasks.set(
+      id,
+      task
+    );
+
+
+    return task;
+
+  }
+
+
+  function update(
+    task,
+    patch
+  ){
+
+    Object.assign(
+      task,
+      patch
+    );
+
+    tasks.set(
+      task.id,
+      task
+    );
+
+    return task;
+
+  }
+
+
+  function perceive(
+    task
+  ){
+
+    return update(
+      task,
+      {
+        status:"perceived",
+
+        context:{
+          screen:"NOA orb",
+
+          state:
+            document.body
+              .dataset
+              .state ||
+            "idle",
+
+          time:
+            new Date()
+              .toISOString()
+        }
+
+      }
+    );
+
+  }
+
+
+  function understand(
+    task
+  ){
+
+    if(
+      window.NOA &&
+      typeof window.NOA
+        .parseCommand ===
+        "function"
+    ){
+
+      const parsed =
+        window.NOA.parseCommand(
+          task.input
+        );
+
+
+      return update(
+        task,
+        {
+          status:
+            "understood",
+
+          parsed,
+
+          intent:
+            parsed &&
+            parsed.type
+              ? parsed.type
+              : "unknown"
+        }
+      );
+
+    }
+
+
+    return update(
+      task,
+      {
+        status:
+          "understood",
+
+        parsed:null,
+
+        intent:"unknown"
+
+      }
+    );
+
+  }
+
+
+  function plan(
+    task
+  ){
+
+    const parsed =
+      task.parsed;
+
+
+    let plan = {
+
+      type:
+        "unknown",
+
+      action:
+        null,
+
+      args:
+        {}
+
+    };
+
+
+    if(
+      parsed &&
+      parsed.type ===
+      "safe"
+    ){
+
+      plan = {
+
+        type:
+          "action",
+
+        action:
+          parsed.action,
+
+        args:
+                  parsed.args || {},
+        risk: actions[parsed.intent].risk
+      };
+    }
+
+    if (parsed.intent === "confirmation_required") {
+      return {
+        type: "confirmation",
+        reason: "This action can have a real-world consequence."
+      };
+    }
+
+    // Device commands are intentionally not faked in the browser.
+    return {
+      type: "device_agent_required",
+      command: parsed.text
+    };
+  }
+
+  function execute(planResult) {
+    if (planResult.type === "noop") {
+      return {
+        ok: true,
+        message: ""
+      };
+    }
+
+    if (planResult.type === "confirmation") {
+      return {
+        ok: false,
+        requiresConfirmation: true,
+        message: "Confirmation is required before I execute that."
+      };
+    }
+
+    if (planResult.type === "device_agent_required") {
+      return {
+        ok: false,
+        requiresAgent: true,
+        message: "That requires the NOA Device Agent."
+      };
+    }
+
+    const action = actions[planResult.action];
+
+    if (!action) {
+      return {
+        ok: false,
+        message: "I don't have an action for that yet."
+      };
+    }
+
+    setState("THINKING");
+
+    const args = planResult.args || {};
+    const result = action.run(...Object.values(args));
+
+    setState("SPEAKING");
+
+    setTimeout(() => {
+      setState("IDLE");
+    }, 900);
+
+    return {
+      ok: true,
+      message: result
+    };
+  }
+
+  function command(input) {
+    const parsed = understand(input);
+
+    remember({
+      input,
+      intent: parsed.intent
+    });
+
+    const planResult = plan(parsed);
+    const result = execute(planResult);
+
+    return {
+      parsed,
+      plan: planResult,
+      result
+    };
+  }
+
+  return {
+    command,
+    understand,
+    getMemory: () => [...memory.session],
+    setGoal: goal => {
+      memory.activeGoal = goal;
+    },
+    getGoal: () => memory.activeGoal,
+    permissions
+  };
+})();
+
+window.NOA = window.NOA || {};
+window.NOA.command = input => NOACore.command(input);
+window.NOA.brain = NOACore;
+
+
+// ============================================================
+// NOA TASK ENGINE v1
+// Headless agent lifecycle:
+// perceive -> understand -> plan ->
+// permission -> execute -> verify -> respond.
+// ============================================================
+
+const NOATaskEngine = (() => {
+
+  const tasks = new Map();
+  let sequence = 0;
+
+  const risk = {
+    LOW: "LOW",
+    MEDIUM: "MEDIUM",
+    HIGH: "HIGH"
+  };
+
+  function create(input) {
+
+    const id = `task_${++sequence}`;
+
+    const task = {
+      id,
+      input: String(input || ""),
+      status: "received",
+      risk: risk.LOW,
+      plan: [],
+      result: null,
+      createdAt: Date.now()
+    };
+
+    tasks.set(id, task);
+
+    return task;
+  }
+
+  function update(task, patch) {
+
+    Object.assign(task, patch);
+
+    tasks.set(task.id, task);
+
+    return task;
+  }
+
+  function perceive(task) {
+
+    return update(task, {
+
+      status: "perceived",
+
+      context: {
+        screen: "NOA orb",
+        state: document.body.dataset.state || "idle",
+        time: new Date().toISOString()
+      }
+
+    });
+  }
+
+  function understand(task) {
+
+    const parsed = NOACore.understand(task.input);
+
+    return update(task, {
+
+      status: "understood",
+      intent: parsed.intent,
+      parsed
+
+    });
+  }
+
+  function plan(task) {
+
+    const plan = NOACore.command(task.input).plan;
+
+    let taskRisk = risk.LOW;
+
+    if (plan.type === "confirmation") {
+      taskRisk = risk.HIGH;
+    }
+
+    else if (plan.type === "device_agent_required") {
+      taskRisk = risk.MEDIUM;
+    }
+
+    else if (plan.action === "open_url") {
+      taskRisk = risk.MEDIUM;
+    }
+
+    return update(task, {
+
+      status: "planned",
+      plan,
+      risk: taskRisk
+
+    });
+  }
+
+  function permission(task) {
+
+    if (task.risk === risk.HIGH) {
+
+      return update(task, {
+
+        status: "waiting_for_confirmation",
+        permission: "confirmation_required"
+
+      });
+    }
+
+    if (
+      task.risk === risk.MEDIUM &&
+      task.plan.type === "device_agent_required"
+    ) {
+
+      return update(task, {
+
+        status: "waiting_for_agent",
+        permission: "device_agent_required"
+
+      });
+    }
+
+    return update(task, {
+
+      status: "authorized",
+      permission: "allowed"
+
+    });
+  }
+
+  function execute(task) {
+
+    if (task.status !== "authorized") {
+      return task;
+    }
+
+    setState("EXECUTING");
+
+    let result;
+
+    if (task.plan.type === "action") {
+
+      const action = task.plan.action;
+      const args = task.plan.args || {};
+
+      const actionMap = {
+
+        zoom_in: () => {
+
+          zoom = Math.min(
+            MAX_ZOOM,
+            zoom + 0.15
+          );
+
+          applyOrbZoom();
+
+          return "Zoomed in.";
+        },
+
+        zoom_out: () => {
+
+          zoom = Math.max(
+            MIN_ZOOM,
+            zoom - 0.15
+          );
+
+          applyOrbZoom();
+
+          return "Zoomed out.";
+        },
+
+        reset_zoom: () => {
+
+          zoom = 1;
+
+          applyOrbZoom();
+
+          return "Zoom reset.";
+        },
+
+        status: () => {
+          return `NOA is ${state.textContent.toLowerCase()}.`;
+        },
+
+        open_url: () => {
+
+          const w = window.open(
+            args.url,
+            "_blank",
+            "noopener,noreferrer"
+          );
+
+          return w
+            ? `Opened ${args.url}`
+            : "The browser blocked the new tab.";
+        }
+
+      };
+
+      result = actionMap[action]
+        ? actionMap[action]()
+        : "Action is not implemented yet.";
+
+    }
+
+    else {
+
+      result = "No executable action is available.";
+
+    }
+
+    return update(task, {
+
+      status: "executed",
+      result
+
+    });
+  }
+
+  function verify(task) {
+
+    let verified = false;
+
+    if (task.status === "executed") {
+
+      if (
+        task.plan.action === "zoom_in" ||
+        task.plan.action === "zoom_out" ||
+        task.plan.action === "reset_zoom"
+      ) {
+
+        verified = true;
+
+      }
+
+      else if (task.plan.action === "status") {
+
+        verified = true;
+
+      }
+
+      else if (task.plan.action === "open_url") {
+
+        // Browser APIs don't expose reliable
+        // cross-window verification.
+        verified =
+          task.result !==
+          "The browser blocked the new tab.";
+
+      }
+
+    }
+
+    return update(task, {
+
+      status:
+        verified
+          ? "verified"
+          : "completed_with_limit",
+
+      verified
+
+    });
+  }
+
+  function respond(task) {
+
+    const message =
+      task.status === "waiting_for_confirmation"
+        ? "Confirmation required."
+        : task.status === "waiting_for_agent"
+        ? "The NOA Device Agent is required for this action."
+        : task.result || "Task completed.";
+
+    setState("SPEAKING");
+
+    if (
+      "speechSynthesis" in window &&
+      message
+    ) {
+
+      window.speechSynthesis.cancel();
+
+      window.speechSynthesis.speak(
+        new SpeechSynthesisUtterance(message)
+      );
+
+    }
+
+    setTimeout(() => {
+      setState("IDLE");
+    }, 900);
+
+    return update(task, {
+
+      status:
+        task.status === "verified"
+          ? "responded"
+          : task.status,
+
+      response: message
+
+    });
+  }
+
+  function run(input) {
+
+    const task = create(input);
+
+    perceive(task);
+    understand(task);
+    plan(task);
+    permission(task);
+
+    if (task.status === "authorized") {
+
+      execute(task);
+      verify(task);
+
+    }
+
+    return respond(task);
+  }
+
+  return {
+
+    run,
+
+    get: id =>
+      tasks.get(id) || null,
+
+    list: () =>
+      [...tasks.values()]
+
+  };
+
+})();
+
+window.NOA = window.NOA || {};
+
+window.NOA.runTask =
+  input => NOATaskEngine.run(input);
+
+window.NOA.tasks =
+  NOATaskEngine;
+
+
+// ============================================================
+// PART 3 END
+// PART 4 CAN START AFTER THIS BLOCK
+// ============================================================
