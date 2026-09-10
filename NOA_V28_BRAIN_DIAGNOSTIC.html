@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#000000">
+<title>NOA</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}
+body{font-family:Inter,Arial,sans-serif;color:#4fa3ff;touch-action:none}
+button,input{font:inherit}
+#app{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+
+#orb{position:relative;width:280px;height:280px;flex:0 0 280px;transform-origin:center;will-change:transform}
+#orbGlow{position:absolute;inset:-55px;border-radius:50%;background:radial-gradient(circle,rgba(30,110,255,.34),rgba(20,80,220,.10) 42%,transparent 72%);filter:blur(18px);animation:breathe 4.5s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
+#orb svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.r1{animation:r1 22s linear infinite;transform-origin:210px 210px}
+.r2{animation:r2 17s linear infinite;transform-origin:210px 210px}
+.r3{animation:r3 13s linear infinite;transform-origin:210px 210px}
+.r4{animation:r1 27s linear infinite;transform-origin:210px 210px}
+@keyframes r1{to{transform:rotate(360deg)}}
+@keyframes r2{from{transform:rotate(360deg)}to{transform:rotate(0)}}
+@keyframes r3{to{transform:rotate(-360deg)}}
+
+#center{position:absolute;inset:0;z-index:5;pointer-events:none}
+#wave{position:absolute;left:50%;top:50%;width:150px;height:30px;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;gap:3px}
+#wave i{display:block;width:2px;border-radius:3px;background:#4fa3ff;box-shadow:0 0 7px rgba(79,163,255,.7);animation:wave 1s ease-in-out infinite alternate}
+@keyframes wave{from{transform:scaleY(.28);opacity:.38}to{transform:scaleY(1);opacity:1}}
+#state{position:absolute;left:50%;top:calc(50% + 27px);transform:translateX(-50%);font-size:10px;line-height:1;letter-spacing:3px;text-transform:uppercase;text-shadow:0 0 10px rgba(79,163,255,.75)}
+#spokenText{position:absolute;left:50%;top:calc(50% + 48px);transform:translateX(-50%);width:205px;text-align:center;color:#4fa3ff;font-size:11px;line-height:1.45;letter-spacing:.4px;text-shadow:0 0 7px rgba(79,163,255,.85),0 0 14px rgba(79,163,255,.45);opacity:0;transition:opacity .15s ease;z-index:10;pointer-events:none}
+body[data-state="speaking"] #state{opacity:0}
+body[data-state="speaking"] #spokenText{opacity:1}
+body[data-state="thinking"] #orbGlow{animation:breathe 1.6s ease-in-out infinite}
+body[data-state="executing"] #orbGlow{animation:breathe .75s ease-in-out infinite}
+body[data-state="speaking"] #wave i{animation-duration:.45s}
+body[data-state="executing"] #wave i{animation-duration:.3s}
+body[data-state="complete"] #orbGlow{animation:pulse .7s ease-out 1}
+@keyframes pulse{50%{transform:scale(1.2);opacity:1}}
+
+#mic{position:fixed;right:28px;bottom:28px;width:48px;height:48px;border-radius:50%;z-index:20;display:flex;align-items:center;justify-content:center;border:2px solid #4fa3ff;background:rgba(79,163,255,.12);color:#4fa3ff;box-shadow:0 0 22px rgba(79,163,255,.25),inset 0 0 10px rgba(79,163,255,.08);font-size:18px;user-select:none;touch-action:none;cursor:grab;-webkit-tap-highlight-color:transparent}
+#mic.dragging{cursor:grabbing}
+#mic.on{border-color:#35e887;color:#35e887;background:rgba(53,232,135,.16);box-shadow:0 0 30px rgba(53,232,135,.42),inset 0 0 12px rgba(53,232,135,.12)}
+
+#popupLayer{position:fixed;inset:0;z-index:10;pointer-events:none;overflow:hidden}
+.noa-popup{position:absolute;left:50%;top:50%;width:min(360px,72vw);min-height:150px;transform:translate(-50%,-50%);pointer-events:auto;border:1px solid rgba(79,163,255,.42);border-radius:18px;background:rgba(3,8,18,.92);box-shadow:0 0 35px rgba(25,105,220,.18);color:#dcecff;overflow:hidden;user-select:none;touch-action:none}
+.noa-popup-head{height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 16px;border-bottom:1px solid rgba(120,180,255,.12);cursor:grab}
+.noa-popup-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7dbdff}
+.noa-popup-actions{display:flex;gap:6px}
+.noa-popup-actions button{width:30px;height:30px;border:0;border-radius:8px;background:rgba(79,163,255,.08);color:#8fc8ff;font-size:15px;cursor:pointer}
+.noa-popup-body{padding:16px;font-size:13px;line-height:1.55;white-space:pre-wrap;overflow:auto;max-height:300px;user-select:text;touch-action:pan-y}
+
+#chatOverlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.58);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .2s ease}
+#chatOverlay.open{opacity:1;pointer-events:auto}
+#chatBox{width:min(430px,92vw);height:min(650px,80vh);display:flex;flex-direction:column;border:1px solid rgba(79,163,255,.45);border-radius:20px;background:linear-gradient(180deg,rgba(5,13,28,.98),rgba(1,5,12,.98));box-shadow:0 0 45px rgba(25,105,220,.22),inset 0 0 30px rgba(79,163,255,.035);overflow:hidden;transform:scale(.94);transition:transform .2s ease}
+#chatOverlay.open #chatBox{transform:scale(1)}
+#chatHeader{height:54px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 18px;border-bottom:1px solid rgba(120,180,255,.13)}
+#chatTitle{color:#7dbdff;font-size:11px;letter-spacing:3px;text-transform:uppercase}
+#chatActions{display:flex;gap:7px}
+.chatAction{width:34px;height:34px;border:1px solid rgba(79,163,255,.25);border-radius:9px;background:rgba(79,163,255,.07);color:#9dccff;cursor:pointer;font-size:15px;padding:0}
+#chatHistory{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin}
+.message{max-width:88%;padding:10px 12px;border-radius:13px;font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.message.user{align-self:flex-end;color:#dff0ff;background:rgba(79,163,255,.12);border:1px solid rgba(79,163,255,.22);border-bottom-right-radius:4px}
+.message.noa{align-self:flex-start;color:#dcecff;background:rgba(8,18,35,.9);border:1px solid rgba(79,163,255,.17);border-bottom-left-radius:4px;box-shadow:0 0 15px rgba(25,105,220,.08)}
+.messageLabel{display:block;margin-bottom:4px;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#6dafff;opacity:.7}
+#chatHint{padding:0 12px 9px;color:#50708f;font-size:9px;text-align:center}
+#chatInputArea{display:flex;gap:7px;padding:10px;border-top:1px solid rgba(120,180,255,.13)}
+#chatInput{flex:1;min-width:0;height:42px;border:1px solid rgba(79,163,255,.22);border-radius:11px;outline:none;background:rgba(79,163,255,.05);color:#dcecff;padding:0 12px;font-size:13px}
+#chatInput::placeholder{color:#6684a5}
+#sendChat{width:44px;height:42px;border:1px solid rgba(79,163,255,.35);border-radius:11px;background:rgba(79,163,255,.10);color:#8fc8ff;cursor:pointer;font-size:17px;padding:0}
+
+@media(max-width:500px){#orb{width:280px;height:280px;flex-basis:280px}#mic{right:20px;bottom:20px}}
+@media(max-height:650px){#orb{width:260px;height:260px;flex-basis:260px}}
+</style>
+</head>
+<body data-state="idle">
+<div id="popupLayer" aria-live="polite"></div>
+<div id="app">
+  <div id="orb">
+    <div id="orbGlow"></div>
+    <svg viewBox="0 0 420 420" aria-hidden="true">
+      <defs>
+        <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="soft"><feGaussianBlur stdDeviation="2"/></filter>
+        <radialGradient id="core"><stop offset="0" stop-color="#020409"/><stop offset="1" stop-color="#000"/></radialGradient>
+        <linearGradient id="a"><stop stop-color="#bfe0ff" stop-opacity="0"/><stop offset=".5" stop-color="#4fa3ff"/><stop offset="1" stop-color="#bfe0ff" stop-opacity="0"/></linearGradient>
+        <linearGradient id="b"><stop stop-color="#dff0ff" stop-opacity="0"/><stop offset=".5" stop-color="#7cc4ff"/><stop offset="1" stop-color="#dff0ff" stop-opacity="0"/></linearGradient>
+      </defs>
+      <circle cx="210" cy="210" r="150" fill="url(#core)"/>
+      <g filter="url(#glow)">
+        <g class="r1"><path d="M210 65 C300 70 355 140 350 215 C345 290 280 350 205 350" fill="none" stroke="url(#a)" stroke-width="2.6" stroke-linecap="round"/></g>
+        <g class="r2"><path d="M205 355 C120 352 65 285 68 210 C71 135 130 72 208 68" fill="none" stroke="url(#b)" stroke-width="2.4" stroke-linecap="round"/></g>
+        <g class="r3"><ellipse cx="210" cy="210" rx="142" ry="128" fill="none" stroke="#3d8fff" stroke-opacity=".55" stroke-width="1.4" stroke-dasharray="1 9"/></g>
+        <g class="r4"><ellipse cx="210" cy="210" rx="128" ry="144" fill="none" stroke="#8fd0ff" stroke-opacity=".4" stroke-width="1.1" stroke-dasharray="1 7"/></g>
+        <g class="r2"><circle cx="210" cy="210" r="150" fill="none" stroke="#2f6fe0" stroke-opacity=".5"/></g>
+      </g>
+      <g filter="url(#soft)">
+        <circle cx="210" cy="61" r="2" fill="#eaf6ff"/><circle cx="358" cy="150" r="1.6" fill="#cfe8ff"/><circle cx="360" cy="270" r="1.8" fill="#eaf6ff"/><circle cx="205" cy="359" r="2" fill="#cfe8ff"/><circle cx="62" cy="255" r="1.6" fill="#eaf6ff"/><circle cx="65" cy="145" r="1.8" fill="#cfe8ff"/>
+      </g>
+    </svg>
+    <div id="center"><div id="wave"></div><div id="state">IDLE</div><div id="spokenText"></div></div>
+  </div>
+</div>
+<button id="mic" aria-label="Microphone" aria-pressed="false">🎙</button>
+
+<div id="chatOverlay">
+  <div id="chatBox">
+    <div id="chatHeader"><div id="chatTitle">NOA // CHAT</div><div id="chatActions"><button class="chatAction" id="clearChat" title="Clear history">⌫</button><button class="chatAction" id="closeChat" title="Close">×</button></div></div>
+    <div id="chatHistory"></div>
+    <div id="chatHint">Double-tap the orb to open chat</div>
+    <div id="chatInputArea"><input id="chatInput" type="text" autocomplete="off" placeholder="Talk to NOA..."/><button id="sendChat" aria-label="Send">➤</button></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const body=document.body, wave=document.getElementById("wave"), state=document.getElementById("state");
+const mic=document.getElementById("mic"), orb=document.getElementById("orb"), spokenText=document.getElementById("spokenText");
+const chatOverlay=document.getElementById("chatOverlay"), chatHistory=document.getElementById("chatHistory");
+const chatInput=document.getElementById("chatInput"), sendChat=document.getElementById("sendChat");
+const closeChat=document.getElementById("closeChat"), clearChat=document.getElementById("clearChat");
+const popupLayer=document.getElementById("popupLayer");
+const NOA_WORKER="https://noa-brain-a78d.ajaiacharya7274.workers.dev/api/chat";
+
+[5,8,12,18,11,23,16,29,19,24,14,9,6,10,16,22,15,20,27,17,10,14,20,25,15,9,5].forEach((h,i)=>{
+  const b=document.createElement("i"); b.style.height=h+"px"; b.style.animationDelay=(i*.04)+"s"; wave.appendChild(b);
+});
+
+function setState(s){
+  const next=String(s||"IDLE").trim().toUpperCase();
+  body.dataset.state=next.toLowerCase(); state.textContent=next;
+  if(next!=="SPEAKING") spokenText.textContent="";
+}
+function getState(){return state.textContent}
+window.NOA={setState,getState};
+
+const STORAGE_KEY="NOA_CHAT_HISTORY_V1"; let history=[];
+function loadHistory(){try{const p=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");history=Array.isArray(p)?p:[]}catch(_){history=[]}}
+function saveHistory(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(history.slice(-100)))}catch(_){}}
+function renderHistory(){
+  chatHistory.innerHTML="";
+  history.forEach(item=>{
+    if(!item||typeof item.text!=="string")return;
+    const bubble=document.createElement("div"); bubble.className="message "+(item.role==="user"?"user":"noa");
+    const label=document.createElement("span"); label.className="messageLabel"; label.textContent=item.role==="user"?"YOU":"NOA";
+    const content=document.createElement("span"); content.textContent=item.text; bubble.append(label,content); chatHistory.appendChild(bubble);
+  });
+  requestAnimationFrame(()=>chatHistory.scrollTop=chatHistory.scrollHeight);
+}
+function addHistory(role,text){
+  const clean=String(text||"").trim(); if(!clean)return;
+  history.push({role:role==="user"?"user":"assistant",text:clean}); if(history.length>100)history=history.slice(-100);
+  saveHistory(); renderHistory();
+}
+function openChat(){chatOverlay.classList.add("open");renderHistory();setTimeout(()=>chatInput.focus(),120)}
+function closeChatPopup(){chatOverlay.classList.remove("open")}
+closeChat.addEventListener("click",e=>{e.stopPropagation();closeChatPopup()});
+chatOverlay.addEventListener("click",e=>{if(e.target===chatOverlay)closeChatPopup()});
+clearChat.addEventListener("click",e=>{e.stopPropagation();if(!history.length)return;if(!confirm("Clear NOA chat history?"))return;history=[];saveHistory();renderHistory()});
+
+function speakText(text){
+  const message=String(text||"").trim(); if(!message)return;
+  spokenText.textContent=message; setState("SPEAKING");
+  if("speechSynthesis" in window){window.speechSynthesis.cancel();window.speechSynthesis.speak(new SpeechSynthesisUtterance(message))}
+  setTimeout(()=>setState("IDLE"),1400);
+}
+
+async function ask(text){
+  const message=String(text||"").trim(); if(!message)return "";
+  addHistory("user",message); setState("THINKING");
+  try{
+    const context={
+      source:"NOA_CHAT",
+      history:history.slice(-20),
+      url:location.href,
+      userAgent:navigator.userAgent
+    };
+    const job=await window.NOA_BRAIN_GATEWAY.run(message,context);
+    if(job.state==="COMPLETED"){
+      const answer=String(job.output||"NOA completed the task, but returned no text.").trim();
+      addHistory("assistant",answer); speakText(answer); return answer;
+    }
+    const reason=job.error||(
+      job.state==="WAITING"
+      ? "NOA Brain backend is not connected."
+      : "NOA Brain did not complete the request."
+    );
+    addHistory("assistant","NOA: "+reason);
+    speakText(reason);
+    return reason;
+  }catch(error){
+    const reason=String(error?.message||error||"Unknown Brain error");
+    const answer="NOA Brain error: "+reason;
+    addHistory("assistant",answer); speakText(answer);
+    console.error("NOA gateway error",error);
+    return answer;
+  }
+}
+
+let zoom=1; const MIN_ZOOM=.55,MAX_ZOOM=2.4;
+function applyOrbZoom(){orb.style.transform=`scale(${zoom})`}
+orb.addEventListener("wheel",e=>{e.preventDefault();zoom=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,zoom+(e.deltaY<0?.08:-.08)));applyOrbZoom()},{passive:false});
+let pinchStartDistance=0,pinchStartZoom=1;
+orb.addEventListener("touchstart",e=>{
+  if(e.touches.length!==2)return;
+  pinchStartDistance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);pinchStartZoom=zoom;
+},{passive:true});
+orb.addEventListener("touchmove",e=>{
+  if(e.touches.length!==2||!pinchStartDistance)return;e.preventDefault();
+  const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+  zoom=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,pinchStartZoom*(d/pinchStartDistance)));applyOrbZoom();
+},{passive:false});
+orb.addEventListener("touchend",()=>{pinchStartDistance=0},{passive:true});
+
+function createNoaPopup(title,message){
+  const popup=document.createElement("div");popup.className="noa-popup";
+  popup.innerHTML='<div class="noa-popup-head"><div class="noa-popup-title"></div><div class="noa-popup-actions"><button type="button" data-close>×</button></div></div><div class="noa-popup-body"></div>';
+  popup.querySelector(".noa-popup-title").textContent=String(title||"NOA");
+  popup.querySelector(".noa-popup-body").textContent=String(message||"");
+  popup.querySelector("[data-close]").addEventListener("click",()=>popup.remove());
+  popupLayer.appendChild(popup);return popup;
+}
+window.NOA.showTemporaryResult=(title,message,ms=5000)=>{
+  const p=createNoaPopup(title,message);const timer=setTimeout(()=>{if(p.isConnected)p.remove()},Math.max(1000,Math.min(30000,Number(ms)||5000)));return p;
+};
+
+let pid=null,grabX=0,grabY=0,wasDragged=false;
+mic.addEventListener("pointerdown",e=>{
+  if(e.button!==undefined&&e.button!==0)return;const r=mic.getBoundingClientRect();
+  pid=e.pointerId;grabX=e.clientX-r.left;grabY=e.clientY-r.top;wasDragged=false;mic.classList.add("dragging");mic.setPointerCapture(pid);e.preventDefault();
+});
+mic.addEventListener("pointermove",e=>{
+  if(e.pointerId!==pid)return;const r=mic.getBoundingClientRect();const dx=e.clientX-(r.left+grabX),dy=e.clientY-(r.top+grabY);
+  if(Math.abs(dx)>3||Math.abs(dy)>3)wasDragged=true;
+  mic.style.left=Math.max(0,Math.min(innerWidth-r.width,r.left+dx))+"px";mic.style.top=Math.max(0,Math.min(innerHeight-r.height,r.top+dy))+"px";
+});
+function endPointer(e){if(e.pointerId!==pid)return;mic.classList.remove("dragging");if(mic.hasPointerCapture(pid))mic.releasePointerCapture(pid);if(wasDragged){mic.dataset.dragged="1";setTimeout(()=>delete mic.dataset.dragged,120)}pid=null}
+mic.addEventListener("pointerup",endPointer);mic.addEventListener("pointercancel",endPointer);
+
+let listening=false,recognition=null,visualMicOn=false;
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function setMicVisual(on){visualMicOn=Boolean(on);mic.classList.toggle("on",visualMicOn);mic.setAttribute("aria-pressed",String(visualMicOn));setState(visualMicOn?"LISTENING":"IDLE")}
+if(SR){
+  recognition=new SR();recognition.lang="en-US";recognition.continuous=false;recognition.interimResults=true;
+  recognition.onstart=()=>{listening=true;setMicVisual(true)};
+  recognition.onresult=e=>{
+    let text="",finalResult=false;
+    for(let i=e.resultIndex;i<e.results.length;i++){text+=e.results[i][0].transcript;if(e.results[i].isFinal)finalResult=true}
+    if(text.trim())setState("THINKING");if(finalResult)handleUserInput(text.trim());
+  };
+  recognition.onerror=()=>{listening=false;setMicVisual(false)};
+  recognition.onend=()=>{listening=false;if(visualMicOn&&state.textContent==="LISTENING")setState("IDLE")};
+}
+mic.addEventListener("click",e=>{
+  if(mic.dataset.dragged==="1"){e.preventDefault();delete mic.dataset.dragged;return}
+  const next=!visualMicOn;setMicVisual(next);
+  if(recognition){if(next){try{recognition.start()}catch(_){}}else if(listening){try{recognition.stop()}catch(_){}}}
+});
+setMicVisual(false);
+
+function makeId(){return (crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+"_"+Math.random().toString(36).slice(2)}
+
+const CommandEngine=(()=>{
+  const dangerous=/\b(delete|remove|format|factory reset|purchase|buy|send money|shutdown|restart|install|uninstall|pay|transfer|publish|post|change password)\b/i;
+  const safe={
+    zoom_in(){zoom=Math.min(MAX_ZOOM,zoom+.15);applyOrbZoom();return"Zooming in."},
+    zoom_out(){zoom=Math.max(MIN_ZOOM,zoom-.15);applyOrbZoom();return"Zooming out."},
+    reset_zoom(){zoom=1;applyOrbZoom();return"Zoom reset."},
+    status(){return`NOA is ${state.textContent.toLowerCase()}.`},
+    open_url(url){const w=window.open(url,"_blank","noopener,noreferrer");return w?"Opening it.":"The browser blocked the new tab."}
+  };
+  function normalize(t){return String(t||"").trim().toLowerCase().replace(/\s+/g," ")}
+  function parse(text){
+    const t=normalize(text);if(!t)return{type:"empty",id:makeId(),text:t};
+    if(/^(zoom in|zoom closer|make it bigger)$/.test(t))return{type:"safe",action:"zoom_in",id:makeId(),text:t};
+    if(/^(zoom out|zoom away|make it smaller)$/.test(t))return{type:"safe",action:"zoom_out",id:makeId(),text:t};
+    if(/^(reset zoom|normal size|reset orb)$/.test(t))return{type:"safe",action:"reset_zoom",id:makeId(),text:t};
+    if(/^(status|what is your state|what state are you in)$/.test(t))return{type:"safe",action:"status",id:makeId(),text:t};
+    const url=t.match(/^(?:open|go to|visit)\s+(https?:\/\/\S+|www\.\S+)$/);
+    if(url){let u=url[1];if(u.startsWith("www."))u="https://"+u;return{type:"safe",action:"open_url",args:{url:u},id:makeId(),text:t}}
+    if(dangerous.test(t))return{type:"confirmation",id:makeId(),text:t};
+    if(/^(open|launch|start)\s+/.test(t))return{type:"requires_agent",id:makeId(),text:t};
+    if(/^(lock|turn|switch|copy|type|send)\s+/.test(t))return{type:"requires_agent",id:makeId(),text:t};
+    return{type:"brain",id:makeId(),text:t};
+  }
+  function execute(parsed){
+    if(!parsed||parsed.type==="empty")return{ok:true,message:""};
+    if(parsed.type==="safe"){
+      setState("EXECUTING");const fn=safe[parsed.action];const result=fn(...Object.values(parsed.args||{}));setState("COMPLETE");setTimeout(()=>setState("IDLE"),600);return{ok:true,message:result};
+    }
+    if(parsed.type==="confirmation")return{ok:false,requiresConfirmation:true,message:"Confirmation required before this action."};
+    if(parsed.type==="requires_agent"){
+      const intent={id:parsed.id,text:parsed.text,type:"DEVICE_COMMAND",target:/pc|computer|desktop|windows|mac/i.test(parsed.text)?"PC":"PHONE_OR_BROWSER"};
+      window.dispatchEvent(new CustomEvent("noa:command",{detail:intent}));
+      window.dispatchEvent(new CustomEvent("noa:device-action",{detail:intent}));
+      return{ok:false,requiresAgent:true,message:"This command needs the NOA Device Agent."};
+    }
+    return{ok:false,needsBrain:true,message:""};
+  }
+  return{parse,execute,command:text=>{const p=parse(text);return{parsed:p,result:execute(p)}}};
+})();
+
+const NOACore=(()=>{
+  const memory={session:[],facts:new Map(),activeGoal:null};
+  function remember(input,intent){memory.session.push({input,intent,time:Date.now()});if(memory.session.length>50)memory.session.shift()}
+  function command(input){
+    const parsed=CommandEngine.parse(input);remember(input,parsed.type);
+    if(parsed.type==="brain")return{parsed,plan:{type:"brain"},result:{ok:false,needsBrain:true,message:""}};
+    const result=CommandEngine.execute(parsed);
+    return{parsed,plan:result.requiresAgent?{type:"device_agent_required"}:result.requiresConfirmation?{type:"confirmation"}:{type:"action"},result};
+  }
+  return{command,understand:CommandEngine.parse,getMemory:()=>[...memory.session],setGoal:g=>memory.activeGoal=g,getGoal:()=>memory.activeGoal,permissions:{low:"auto",medium:"confirm",high:"confirm"}};
+})();
+
+const NOATaskEngine=(()=>{
+  const tasks=new Map();let sequence=0;
+  function create(input){const task={id:`task_${++sequence}`,input:String(input||""),status:"received",risk:"LOW",plan:null,result:null,createdAt:Date.now()};tasks.set(task.id,task);return task}
+  function update(t,p){Object.assign(t,p);tasks.set(t.id,t);return t}
+  function run(input){
+    const task=create(input);const parsed=CommandEngine.parse(task.input);update(task,{status:"understood",intent:parsed.type,parsed});
+    if(parsed.type==="confirmation")return respond(update(task,{status:"waiting_for_confirmation",risk:"HIGH",response:"Confirmation required."}));
+    if(parsed.type==="requires_agent")return respond(update(task,{status:"waiting_for_agent",risk:"MEDIUM",response:"The NOA Device Agent is required for this action."}));
+    if(parsed.type==="brain")return update(task,{status:"handed_to_brain",risk:"LOW",response:"Sent to NOA Brain."});
+    const result=CommandEngine.execute(parsed);update(task,{status:result.ok?"executed":"completed_with_limit",result});
+    return respond(task);
+  }
+  function respond(task){
+    const message=task.response||task.result?.message||"Task completed.";
+    if(message){setState("SPEAKING");if("speechSynthesis"in window){window.speechSynthesis.cancel();window.speechSynthesis.speak(new SpeechSynthesisUtterance(message))}setTimeout(()=>setState("IDLE"),900)}
+    return update(task,{response:message});
+  }
+  return{run,get:id=>tasks.get(id)||null,list:()=>[...tasks.values()]};
+})();
+
+window.NOA=Object.assign(window.NOA,{
+  command:text=>NOACore.command(text),
+  parseCommand:text=>CommandEngine.parse(text),
+  commandEngine:CommandEngine,
+  brain:NOACore,
+  runTask:input=>NOATaskEngine.run(input),
+  tasks:NOATaskEngine,
+  ask,
+  openChat,
+  handleUserInput
+});
+
+async function handleUserInput(text){
+  const clean=String(text||"").trim();if(!clean)return;
+  const parsed=CommandEngine.parse(clean);
+  if(parsed.type==="safe"||parsed.type==="requires_agent"||parsed.type==="confirmation"){
+    const task=NOATaskEngine.run(clean);
+    if(task.response&&parsed.type!=="safe")addHistory("assistant",task.response);
+    if(parsed.type==="safe")addHistory("assistant",task.result?.message||task.response||"");
+    return task;
+  }
+  return ask(clean);
+}
+
+sendChat.addEventListener("click",()=>{const t=chatInput.value.trim();if(!t)return;chatInput.value="";handleUserInput(t)});
+chatInput.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();sendChat.click()}});
+loadHistory();
+
+let lastOrbTap=0;
+orb.addEventListener("click",()=>{const now=Date.now();if(now-lastOrbTap<380)openChat();lastOrbTap=now});
+
+window.addEventListener("noa:command",e=>{if(e.detail&&e.detail.type==="DEVICE_COMMAND"){setState("EXECUTING");setTimeout(()=>setState("IDLE"),700)}});
+
+setState("IDLE");
+</script>
+<script src="noa-device-bridge.js"></script>
+
+<!-- NOA V22 MULTIPLE POPUP MANAGER FOUNDATION: additive only -->
+<style id="noaV22PopupManagerCSS">
+#noaPopupManagerDock{position:fixed;right:14px;top:14px;z-index:21000;display:none;width:min(300px,calc(100vw - 28px));max-height:48vh;overflow:hidden;padding:10px 12px;border:1px solid rgba(79,163,255,.24);border-radius:14px;background:rgba(3,8,18,.94);backdrop-filter:blur(10px);color:#9dccff;font:11px Inter,Arial,sans-serif}
+#noaPopupManagerDock.visible{display:block}
+#noaPopupManagerDock .npm-head{display:flex;align-items:center;gap:8px;padding-bottom:8px}
+#noaPopupManagerDock .npm-title{font-weight:700;letter-spacing:1.2px}
+#noaPopupManagerDock .npm-count{margin-left:auto;opacity:.7}
+#noaPopupManagerDock .npm-list{max-height:40vh;overflow:auto}
+#noaPopupManagerDock .npm-row{display:flex;align-items:center;gap:8px;padding:8px 4px;border-top:1px solid rgba(79,163,255,.08);cursor:pointer}
+#noaPopupManagerDock .npm-row.active{background:rgba(79,163,255,.07)}
+#noaPopupManagerDock .npm-dot{width:6px;height:6px;border-radius:50%;background:#4fa3ff;box-shadow:0 0 8px rgba(79,163,255,.7);flex:0 0 auto}
+#noaPopupManagerDock .npm-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.noaPopupWindow[data-noa-manager-active="true"]{box-shadow:0 0 24px rgba(79,163,255,.20)}
+</style>
+<script id="noaV22PopupManagerJS">
+(()=>{if(window.NOA_MULTIPOPUP?.version==="22")return;
+const registry=new Map();let seq=0,activeId=null;
+const TYPES=Object.freeze(["CHAT","IMAGE","3D","VIDEO","AUTOMATION","AGENT","RESEARCH","CODE","COMPUTER","CUSTOM"]);
+const typeOf=v=>{const s=String(v||"CUSTOM").trim().toUpperCase();return s==="THREE_D"||s==="3D MODEL"?"3D":TYPES.includes(s)?s:"CUSTOM"};
+function dock(){let d=document.getElementById("noaPopupManagerDock");if(d)return d;d=document.createElement("aside");d.id="noaPopupManagerDock";d.innerHTML='<div class="npm-head"><span class="npm-title">NOA // TASKS</span><span class="npm-count">0</span></div><div class="npm-list"></div>';document.body.appendChild(d);return d}
+function prune(){for(const [id,t] of registry)if(!t.el?.isConnected){registry.delete(id);if(activeId===id)activeId=null}}
+function render(){prune();const d=dock();d.querySelector(".npm-count").textContent=String(registry.size);const l=d.querySelector(".npm-list");l.replaceChildren();for(const [id,t] of registry){const r=document.createElement("div");r.className="npm-row"+(id===activeId?" active":"");const dot=document.createElement("span");dot.className="npm-dot";const n=document.createElement("span");n.className="npm-name";n.textContent=t.title+" · "+t.state;r.append(dot,n);r.onclick=()=>activate(id);l.appendChild(r)}d.classList.toggle("visible",registry.size>0)}
+function activate(id){const t=registry.get(String(id));if(!t?.el?.isConnected)return false;activeId=t.id;registry.forEach(x=>{x.active=x.id===activeId;x.el.dataset.noaManagerActive=String(x.active)});t.updatedAt=Date.now();t.el.style.zIndex="30000";window.updateNoaConnectors?.();window.dispatchEvent(new CustomEvent("noa:manager-active",{detail:t}));render();return true}
+function create(o={}){if(!window.NOA_POPUPS?.create)return null;const type=typeOf(o.type),title=String(o.title||("NOA // "+type)),el=window.NOA_POPUPS.create(title,String(o.content||""));const id="npm-"+(++seq)+"-"+Date.now().toString(36);const t={id,type,title,state:"READY",createdAt:Date.now(),updatedAt:Date.now(),active:false,el};el.dataset.noaManagerId=id;el.dataset.noaManagerType=type;el.dataset.noaManagerState="READY";registry.set(id,t);el.addEventListener("pointerdown",()=>activate(id),{passive:true});el.querySelector(".noaPopupClose")?.addEventListener("click",()=>{registry.delete(id);if(activeId===id)activeId=null;render();window.updateNoaConnectors?.()},{once:true});activate(id);return t}
+function setState(id,state){const t=registry.get(String(id));if(!t)return false;t.state=String(state||"READY").trim().toUpperCase();t.updatedAt=Date.now();t.el.dataset.noaManagerState=t.state;render();window.dispatchEvent(new CustomEvent("noa:manager-state",{detail:t}));return true}
+function remove(id){const t=registry.get(String(id));if(!t)return false;t.el.remove();registry.delete(String(id));if(activeId===String(id))activeId=null;render();window.updateNoaConnectors?.();return true}
+function get(id){return registry.get(String(id))||null}
+window.NOA_MULTIPOPUP={version:"22",types:TYPES,create,activate,setState,remove,get,list:()=>[...registry.values()].map(({el,...x})=>x),count:()=>registry.size,active:()=>activeId?get(activeId):null,togglePanel:()=>dock().classList.toggle("visible"),refresh:render};
+window.NOA_POPUPS=window.NOA_POPUPS||{};window.NOA_POPUPS.createTask=create;window.NOA_POPUPS.activateTask=activate;window.NOA_POPUPS.taskCount=()=>registry.size;
+})();
+</script>
+
+
+<!-- NOA V23 MULTI-POPUP COMMAND ROUTING: additive only -->
+<style id="noaV23PopupRoutingCSS">
+.noa-popup[data-noa-manager-type="3D"] .noa-popup-body{min-height:150px}
+.noa-popup[data-noa-manager-type="RESEARCH"] .noa-popup-body{min-height:120px}
+.noa-popup[data-noa-manager-type="CODE"] .noa-popup-body{font-family:ui-monospace,SFMono-Regular,monospace}
+</style>
+<script id="noaV23PopupRoutingJS">
+(()=>{if(window.NOA_POPUP_ROUTER?.version==="23")return;
+const routes=[
+ {type:"3D",re:/\b(create|make|design|build)\s+(a\s+)?3d(\s+model)?\b/i,label:"3D MODEL"},
+ {type:"RESEARCH",re:/\b(research|investigate|analyze|look into)\b/i,label:"RESEARCH"},
+ {type:"CODE",re:/\b(write|generate|create|build)\s+(the\s+)?(code|script)\b/i,label:"CODE"},
+ {type:"IMAGE",re:/\b(create|make|generate|design)\s+(an\s+)?image\b/i,label:"IMAGE"},
+ {type:"VIDEO",re:/\b(create|make|generate)\s+(a\s+)?video\b/i,label:"VIDEO"},
+ {type:"CHAT",re:/\b(open|start)\s+(another\s+)?chat\b/i,label:"CHAT"}
+];
+function match(text){const s=String(text||"").trim();return routes.find(r=>r.re.test(s))||null}
+function openRoute(text,route){if(!window.NOA_MULTIPOPUP?.create)return null;
+ const title="NOA // "+route.label;
+ const task=window.NOA_MULTIPOPUP.create({type:route.type,title,content:"Preparing task…\n\n"+String(text).trim()});
+ if(!task)return null;
+ task.input=String(text).trim();
+ if(window.NOA_TASK_WORKSPACE?.hydrate)window.NOA_TASK_WORKSPACE.hydrate(task);
+ window.NOA_MULTIPOPUP.setState(task.id,"QUEUED");
+ setTimeout(()=>{if(window.NOA_MULTIPOPUP.get(task.id)){window.NOA_MULTIPOPUP.setState(task.id,"RUNNING");const body=task.el?.querySelector(".noa-popup-body");if(body)body.textContent=route.type==="3D"?"3D workspace ready.\n\nNext layer: geometry generation and viewport controls.":route.type==="RESEARCH"?"Research workspace ready.\n\nNext layer: sources, notes and synthesis.":route.type==="CODE"?"Code workspace ready.\n\nNext layer: editor, execution and agent handoff.":route.type+" workspace ready.\n\nTask is now isolated in its own popup."}},80);
+ return task}
+function route(text){const r=match(text);return r?openRoute(text,r):null}
+window.NOA_POPUP_ROUTER={version:"23",routes,match,route};
+const previous=window.handleUserInput;
+if(typeof previous==="function"){
+ window.handleUserInput=async function(text){const routed=route(text);if(routed){if(typeof addHistory==="function")addHistory("assistant",routed.title+" opened.");if(typeof setState==="function"){setState("SPEAKING");setTimeout(()=>setState("IDLE"),700)}return routed;}return previous.apply(this,arguments)};
+}
+window.NOA=window.NOA||{};window.NOA.popupRouter=window.NOA_POPUP_ROUTER;window.NOA.createPopupTask=(text)=>window.NOA_POPUP_ROUTER.route(text);
+})();
+</script>
+
+
+<!-- NOA V24 TASK WORKSPACE LAYER: additive only -->
+<style id="noaV24TaskWorkspaceCSS">
+.npm-workspace{display:flex;flex-direction:column;gap:10px}.npm-toolbar{display:flex;gap:6px;flex-wrap:wrap}.npm-btn{border:1px solid rgba(79,163,255,.25);background:rgba(79,163,255,.07);color:#9dccff;border-radius:8px;padding:7px 9px;font-size:10px;cursor:pointer}.npm-btn:active{transform:translateY(1px)}.npm-field{width:100%;min-height:80px;resize:vertical;border:1px solid rgba(79,163,255,.2);border-radius:9px;background:rgba(0,0,0,.24);color:#dcecff;padding:9px;outline:none;font:12px Inter,Arial,sans-serif}.npm-status{font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:#6dafff;opacity:.8}.npm-grid{height:190px;border:1px solid rgba(79,163,255,.16);border-radius:10px;overflow:hidden;background:radial-gradient(circle at 50% 50%,rgba(79,163,255,.08),transparent 65%),#02060d;position:relative}.npm-grid:before,.npm-grid:after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(79,163,255,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(79,163,255,.10) 1px,transparent 1px);background-size:24px 24px;transform:perspective(360px) rotateX(58deg) scale(1.4);transform-origin:center bottom}.npm-grid:after{background-size:48px 48px;opacity:.7}.npm-axis{position:absolute;left:50%;top:50%;width:100px;height:100px;transform:translate(-50%,-50%) rotate(45deg);border:1px solid rgba(79,163,255,.35);box-shadow:0 0 18px rgba(79,163,255,.1)}.npm-code{min-height:180px;font-family:ui-monospace,SFMono-Regular,monospace}.npm-row2{display:flex;gap:7px}.npm-row2>*{flex:1}.npm-input{height:34px;min-width:0;border:1px solid rgba(79,163,255,.2);border-radius:8px;background:rgba(0,0,0,.22);color:#dcecff;padding:0 9px;outline:none;font-size:11px}
+</style>
+<script id="noaV24TaskWorkspaceJS">
+(()=>{if(window.NOA_TASK_WORKSPACE?.version==="24")return;
+const factory={
+"3D":()=>{const w=document.createElement("div");w.className="npm-workspace";w.innerHTML='<div class="npm-status">3D / viewport</div><div class="npm-grid"><div class="npm-axis"></div></div><div class="npm-toolbar"><button class="npm-btn" data-act="orbit">ORBIT</button><button class="npm-btn" data-act="reset">RESET</button><button class="npm-btn" data-act="add">ADD BLOCK</button></div><div class="npm-status" data-out>MODEL READY · 1 OBJECT</div>';return w},
+"RESEARCH":()=>{const w=document.createElement("div");w.className="npm-workspace";w.innerHTML='<div class="npm-status">research / workspace</div><textarea class="npm-field" data-notes placeholder="Research notes…"></textarea><div class="npm-toolbar"><button class="npm-btn" data-act="source">ADD SOURCE</button><button class="npm-btn" data-act="synth">SYNTHESIZE</button></div><div class="npm-status" data-out>0 SOURCES · DRAFT</div>';return w},
+"CODE":()=>{const w=document.createElement("div");w.className="npm-workspace";w.innerHTML='<div class="npm-status">code / editor</div><textarea class="npm-field npm-code" data-code spellcheck="false"></textarea><div class="npm-toolbar"><button class="npm-btn" data-act="save">SAVE</button><button class="npm-btn" data-act="run">RUN</button></div><div class="npm-status" data-out>EDITOR READY</div>';w.querySelector("[data-code]").value='// NOA task code\nfunction run(){\n  return "ready";\n}';return w},
+"IMAGE":()=>{const w=document.createElement("div");w.className="npm-workspace";w.innerHTML='<div class="npm-status">image / prompt</div><textarea class="npm-field" data-prompt placeholder="Describe the image…"></textarea><div class="npm-toolbar"><button class="npm-btn" data-act="generate">GENERATE</button><button class="npm-btn" data-act="clear">CLEAR</button></div><div class="npm-status" data-out>GENERATOR READY</div>';return w},
+"VIDEO":()=>{const w=document.createElement("div");w.className="npm-workspace";w.innerHTML='<div class="npm-status">video / timeline</div><div class="npm-row2"><input class="npm-input" data-start value="0s"><input class="npm-input" data-end value="10s"></div><div class="npm-toolbar"><button class="npm-btn" data-act="addshot">ADD SHOT</button><button class="npm-btn" data-act="preview">PREVIEW</button></div><div class="npm-status" data-out>TIMELINE · 1 SHOT</div>';return w},
+"CHAT":()=>{const w=document.createElement("div");w.className="npm-workspace";w.innerHTML='<div class="npm-status">chat / task</div><textarea class="npm-field" data-chat placeholder="Continue this task…"></textarea><div class="npm-toolbar"><button class="npm-btn" data-act="send">SEND</button></div><div class="npm-status" data-out>CHAT TASK READY</div>';return w}
+};
+const output={add:"MODEL READY · 2 OBJECTS",source:"1 SOURCE · DRAFT",synth:"SYNTHESIS QUEUED",save:"SAVED",run:"EXECUTION QUEUED",generate:"GENERATION QUEUED",clear:"GENERATOR READY",addshot:"TIMELINE · 2 SHOTS",preview:"PREVIEW READY",send:"MESSAGE QUEUED",orbit:"VIEWPORT · ORBIT MODE",reset:"MODEL READY · 1 OBJECT"};
+function mount(task){const body=task?.el?.querySelector(".noa-popup-body");if(!body)return false;const make=factory[task.type];const w=make?make():(()=>{const x=document.createElement("div");x.className="npm-workspace";x.innerHTML='<div class="npm-status">'+task.type+' / workspace</div><div class="npm-status" data-out>TASK READY</div>';return x})();body.replaceChildren(w);w.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const out=w.querySelector("[data-out]");if(out)out.textContent=output[b.dataset.act]||"TASK UPDATED"});return true}
+function hydrate(task){return task?.el?mount(task):false}
+window.NOA_TASK_WORKSPACE={version:"24",mount,hydrate};
+window.addEventListener("noa:manager-active",e=>hydrate(e.detail));
+})();
+</script>
+
+<!-- NOA V26 BRAIN GATEWAY: real adapter + task bridge -->
+<script id="noaV26BrainGatewayJS">
+(()=>{if(window.NOA_BRAIN_GATEWAY?.version==="26")return;
+ const listeners=new Set(),jobs=new Map();let seq=0;const now=()=>Date.now();
+ function emit(job,event){job.updatedAt=now();const detail={job,event,state:job.state};window.dispatchEvent(new CustomEvent("noa:brain",{detail}));listeners.forEach(fn=>{try{fn(detail)}catch(_){}})}
+ function create(input,context={}){const job={id:"brain_"+(++seq)+"_"+now().toString(36),input:String(input||""),context:context||{},state:"CREATED",output:"",error:null,createdAt:now(),updatedAt:now()};jobs.set(job.id,job);emit(job,"created");return job}
+ async function run(input,context={}){const job=create(input,context);job.state="QUEUED";emit(job,"queued");
+   const adapter=window.NOA_BRAIN_ADAPTER;
+   if(typeof adapter!=="function"&&typeof adapter?.run!=="function"){job.state="WAITING";emit(job,"waiting");window.dispatchEvent(new CustomEvent("noa:brain-request",{detail:job}));return job}
+   job.state="RUNNING";emit(job,"running");
+   try{const result=typeof adapter==="function"?await adapter(job.input,job.context,job):await adapter.run(job.input,job.context,job);job.output=result?.output??result?.response??result?.message??result??"";job.state="COMPLETED";emit(job,"completed");return job}
+   catch(err){job.error=String(err?.message||err);job.state="ERROR";emit(job,"error");return job}
+ }
+ function update(id,patch={}){const job=jobs.get(String(id));if(!job)return null;Object.assign(job,patch,{updatedAt:now()});emit(job,"updated");return job}
+ function get(id){return jobs.get(String(id))||null} function list(){return [...jobs.values()]}
+ function on(fn){if(typeof fn!=="function")return()=>{};listeners.add(fn);return()=>listeners.delete(fn)}
+ function setAdapter(adapter){if(typeof adapter!=="function"&&typeof adapter?.run!=="function")throw new TypeError("Brain adapter must be a function or expose run()");window.NOA_BRAIN_ADAPTER=adapter;window.dispatchEvent(new CustomEvent("noa:brain-adapter-ready"));return true}
+ window.NOA_BRAIN_GATEWAY={version:"26",create,run,update,get,list,on,setAdapter,hasAdapter:()=>typeof window.NOA_BRAIN_ADAPTER==="function"||typeof window.NOA_BRAIN_ADAPTER?.run==="function"};
+ window.NOA=window.NOA||{};window.NOA.brainGateway=window.NOA_BRAIN_GATEWAY;
+ window.addEventListener("noa:brain-request",e=>{const job=e.detail;if(!job||window.NOA_BRAIN_ADAPTER)return;setTimeout(()=>{if(job.state==="WAITING")update(job.id,{state:"ERROR",error:"NOA Brain adapter is not connected."})},0)});
+})();
+</script>
+<script id="noaV26TaskBridgeJS">
+(()=>{if(window.NOA_TASK_BRAIN_BRIDGE?.version==="26")return;
+ const map={QUEUED:"QUEUED",RUNNING:"RUNNING",WAITING:"WAITING",COMPLETED:"DONE",ERROR:"ERROR"};
+ async function run(task,input,context={}){if(!task?.id||!window.NOA_BRAIN_GATEWAY)return null;const job=await window.NOA_BRAIN_GATEWAY.run(input??task.input??"",Object.assign({},context,{taskId:task.id,type:task.type}));if(window.NOA_MULTIPOPUP?.setState)window.NOA_MULTIPOPUP.setState(task.id,map[job.state]||job.state);if(task.el){const body=task.el.querySelector(".noa-popup-body");if(body&&job.output)body.textContent=String(job.output);if(body&&job.error)body.textContent="Brain error: "+job.error}return job}
+ window.NOA_TASK_BRAIN_BRIDGE={version:"26",run};
+ window.addEventListener("noa:manager-active",e=>{const task=e.detail;if(task?.input&&!task.__brainStarted){task.__brainStarted=true;run(task,task.input).catch(()=>{})}});
+})();
+</script>
+
+
+<!-- NOA V27 REAL BRAIN ADAPTER + TASK BRIDGE -->
+<script id="noaV27RealBrainAdapterJS">
+(()=>{
+  if(window.NOA_V27_BRAIN_CONNECTED) return;
+
+  const ENDPOINT=window.NOA_BRAIN_ENDPOINT ||
+    "https://noa-brain-a78d.ajaiacharya7274.workers.dev/api/chat";
+
+  async function realBrainAdapter(input,context={},job){
+    const payload={
+      message:String(input||""),
+      history:Array.isArray(context.history)?context.history.slice(-20):[],
+      taskId:job?.id||null,
+      taskType:context.taskType||"CHAT",
+      source:context.source||"NOA",
+      context
+    };
+
+    const response=await fetch(ENDPOINT,{
+      method:"POST",
+      mode:"cors",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload)
+    });
+
+    const raw=await response.text();
+    let data={};
+    try{data=raw?JSON.parse(raw):{}}catch(_){
+      data={output:raw};
+    }
+
+    if(!response.ok){
+      throw new Error(data.error||data.message||("HTTP "+response.status));
+    }
+
+    return {
+      output:data.reply??data.response??data.message??data.text??data.output??""
+    };
+  }
+
+  window.NOA_BRAIN_ADAPTER=realBrainAdapter;
+  window.NOA_BRAIN_ENDPOINT=ENDPOINT;
+  window.NOA_V27_BRAIN_CONNECTED=true;
+
+  // Route brain tasks through the real gateway and expose lifecycle updates.
+  window.NOA_BRAIN_GATEWAY?.on?.(({job,event})=>{
+    window.dispatchEvent(new CustomEvent("noa:task-lifecycle",{
+      detail:{taskId:job.id,event,state:job.state,output:job.output,error:job.error}
+    }));
+  });
+
+  // Convenience bridge for creating a dedicated workspace from a natural-language request.
+  const classify=(text)=>{
+    const s=String(text||"").toLowerCase();
+    if(/\b(3d|three[- ]?d|model|cad|blueprint)\b/.test(s))return"3D";
+    if(/\b(research|investigate|find sources|analy[sz]e)\b/.test(s))return"RESEARCH";
+    if(/\b(code|program|javascript|python|html|css|debug)\b/.test(s))return"CODE";
+    if(/\b(image|picture|illustration|logo)\b/.test(s))return"IMAGE";
+    if(/\b(video|film|animation|scene)\b/.test(s))return"VIDEO";
+    return"CHAT";
+  };
+
+  if(window.NOA_BRAIN_GATEWAY){window.NOA_BRAIN_GATEWAY.createWorkspaceTask=async function(input,extraContext={}){
+    const type=extraContext.taskType||classify(input);
+    let popupTask=null;
+
+    try{
+      if(window.NOA_MULTIPOPUP?.create){
+        popupTask=window.NOA_MULTIPOPUP.create({
+          type,
+          title:"NOA // "+type,
+          content:String(input||"")
+        });
+        if(popupTask) window.NOA_MULTIPOPUP.setState?.(popupTask.id,"QUEUED");
+      }
+
+      const job=await window.NOA_BRAIN_GATEWAY.run(input,{
+        ...extraContext,
+        source:"NOA_WORKSPACE",
+        taskType:type,
+        popupTaskId:popupTask?.id||null
+      });
+
+      if(popupTask){
+        window.NOA_MULTIPOPUP.setState?.(
+          popupTask.id,
+          job.state==="COMPLETED"?"COMPLETED":job.state
+        );
+        const out=popupTask.el?.querySelector("[data-out]");
+        if(out){
+          out.textContent=job.state==="COMPLETED"
+            ? String(job.output||"COMPLETED")
+            : String(job.error||job.state);
+        }
+      }
+
+      return {popupTask,job,type};
+    }catch(error){
+      if(popupTask) window.NOA_MULTIPOPUP.setState?.(popupTask.id,"ERROR");
+      throw error;
+    }
+  };
+  }
+
+  // Make the public NOA task entry point use the real gateway for Brain tasks.
+  const legacyRun=window.NOA?.runTask;
+  if(window.NOA){
+    window.NOA.runTask=async input=>{
+      const parsed=window.NOA.parseCommand?.(input);
+      if(parsed?.type==="brain"){
+        return window.NOA_BRAIN_GATEWAY.createWorkspaceTask(input);
+      }
+      return legacyRun?legacyRun(input):null;
+    };
+  }
+})();
+</script>
+
+
+<!-- NOA V28 BRAIN DIAGNOSTIC + ROBUST ADAPTER REGISTRATION -->
+<style id="noaV28BrainDiagnosticCSS">
+#noaBrainStatus{
+  position:fixed;left:50%;top:10px;transform:translateX(-50%);
+  z-index:22000;padding:5px 9px;border:1px solid rgba(79,163,255,.2);
+  border-radius:999px;background:rgba(2,7,16,.82);color:#7fb9ff;
+  font:9px Inter,Arial,sans-serif;letter-spacing:1px;display:none;
+}
+#noaBrainStatus.visible{display:block}
+#noaBrainStatus.ok{border-color:rgba(53,232,135,.28);color:#6df0a4}
+#noaBrainStatus.err{border-color:rgba(255,90,90,.3);color:#ff9a9a}
+</style>
+<script id="noaV28BrainDiagnosticJS">
+(()=>{
+  if(window.NOA_V28_BRAIN_DIAGNOSTIC) return;
+  window.NOA_V28_BRAIN_DIAGNOSTIC=true;
+
+  const DEFAULT_ENDPOINT="https://noa-brain-a78d.ajaiacharya7274.workers.dev/api/chat";
+  const stored=(()=>{try{return localStorage.getItem("NOA_BRAIN_ENDPOINT")||""}catch(_){return""}})();
+  let endpoint=String(window.NOA_BRAIN_ENDPOINT||stored||DEFAULT_ENDPOINT).trim();
+
+  function status(text,kind=""){
+    let el=document.getElementById("noaBrainStatus");
+    if(!el){
+      el=document.createElement("div");
+      el.id="noaBrainStatus";
+      document.body.appendChild(el);
+    }
+    el.textContent="BRAIN · "+text;
+    el.className="visible"+(kind?" "+kind:"");
+  }
+
+  function setEndpoint(url){
+    const value=String(url||"").trim();
+    if(!/^https?:\/\//i.test(value)) throw new Error("Brain endpoint must start with http:// or https://");
+    endpoint=value.replace(/\/+$/,"");
+    try{localStorage.setItem("NOA_BRAIN_ENDPOINT",endpoint)}catch(_){}
+    window.NOA_BRAIN_ENDPOINT=endpoint;
+    status("ENDPOINT SET","ok");
+    return endpoint;
+  }
+
+  function classifyError(err){
+    const m=String(err?.message||err||"Unknown error");
+    if(/Failed to fetch|NetworkError|Load failed|fetch/i.test(m))
+      return "Network/CORS error. The browser could not reach the Brain Worker.";
+    return m;
+  }
+
+  async function adapter(input,context={},job){
+    const payload={
+      message:String(input||""),
+      history:Array.isArray(context.history)?context.history.slice(-20):[],
+      taskId:job?.id||context.taskId||null,
+      taskType:context.taskType||context.type||"CHAT",
+      source:context.source||"NOA",
+      context
+    };
+
+    status("CONNECTING");
+    let response;
+    try{
+      response=await fetch(endpoint,{
+        method:"POST",
+        mode:"cors",
+        cache:"no-store",
+        headers:{"Content-Type":"application/json","Accept":"application/json"},
+        body:JSON.stringify(payload)
+      });
+    }catch(err){
+      const reason=classifyError(err);
+      status("OFFLINE","err");
+      throw new Error(reason);
+    }
+
+    const raw=await response.text();
+    let data={};
+    try{data=raw?JSON.parse(raw):{}}catch(_){data={output:raw}}
+
+    if(!response.ok){
+      status("HTTP "+response.status,"err");
+      throw new Error(data.error||data.message||("HTTP "+response.status));
+    }
+
+    const output=String(
+      data.reply??data.response??data.message??data.text??data.output??""
+    ).trim();
+
+    if(!output){
+      status("CONNECTED · EMPTY RESPONSE","err");
+      throw new Error("Brain Worker connected but returned no response text.");
+    }
+
+    status("CONNECTED","ok");
+    return {output};
+  }
+
+  function install(){
+    window.NOA_BRAIN_ENDPOINT=endpoint;
+    window.NOA_BRAIN_ADAPTER=adapter;
+    if(window.NOA_BRAIN_GATEWAY?.setAdapter){
+      try{window.NOA_BRAIN_GATEWAY.setAdapter(adapter)}catch(_){}
+    }
+    status("READY","ok");
+    window.dispatchEvent(new CustomEvent("noa:brain-adapter-ready"));
+  }
+
+  async function test(){
+    try{
+      const result=await adapter("NOA connection test",{source:"NOA_DIAGNOSTIC",taskType:"CHAT"},{id:"diagnostic"});
+      return {ok:true,output:result.output,endpoint};
+    }catch(error){
+      return {ok:false,error:String(error?.message||error),endpoint};
+    }
+  }
+
+  window.NOA_BRAIN_DIAGNOSTIC={
+    version:"28",
+    getEndpoint:()=>endpoint,
+    setEndpoint,
+    test,
+    status
+  };
+
+  window.NOA=window.NOA||{};
+  window.NOA.setBrainEndpoint=setEndpoint;
+  window.NOA.testBrainConnection=test;
+
+  // Register immediately and again after the page settles.
+  install();
+  setTimeout(install,250);
+  setTimeout(install,1000);
+})();
+</script>
+
+</body>
+</html>
